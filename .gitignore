@@ -1,0 +1,23 @@
+node_modules
+.pnpm-store
+.next
+out
+build
+dist
+coverage
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+.DS_Store
+*.pem
+npm-debug.log*
+pnpm-debug.log*
+
+# secrets: only .env.example is committed
+.env
+.env.*
+!.env.example
+
+# local docker data / dumps
+/.data
+/backups

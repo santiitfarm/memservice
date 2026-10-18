@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# pnpm blocks dependency install scripts by default; allow only what we need
+allowBuilds:
+  core-js: false # postinstall is only a donation banner
+  sharp: true # native image optimizer used by next/image
+  unrs-resolver: true # native resolver used by eslint-config-next

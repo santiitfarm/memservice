@@ -1,0 +1,117 @@
+[{
+  "_id": {
+    "$oid": "67535570651ff39734caffc8"
+  },
+  "is_new": true,
+  "is_trending": true,
+  "is_offer": false,
+  "top_seller": true,
+  "best_seller": false,
+  "name": "Cefuroxime 500mg Tablets",
+  "manufacturer_name": "PharmaTech Ltd.",
+  "products_type": "Antibiotic",
+  "generic_name": "Cefuroxime",
+  "strength": "500mg",
+  "pack_size": [
+    "10 tablets",
+    "20 tablets"
+  ],
+  "category": "64bdf1234567890abcdef123",
+  "brand": "64bdf1234567890abcdef456",
+  "color": [
+    "White"
+  ],
+  "regular_price": "300",
+  "discount_price": "250",
+  "purchase_price": "200",
+  "short_description": "Effective antibiotic for treating bacterial infections.",
+  "product_features": [
+    "Broad-spectrum antibiotic",
+    "Fast action against infections"
+  ],
+  "additional_info": "Take after meals. Follow doctor's prescription.",
+  "specificationsHtml": "<ul><li>500mg per tablet</li><li>Available in packs of 10 and 20</li></ul>",
+  "special_tag": "Doctor Recommended",
+  "tags": [
+    "antibiotic",
+    "infection",
+    "medicine"
+  ],
+  "images": [
+    "cefuroxime1.jpg",
+    "cefuroxime2.jpg"
+  ],
+  "status": "active",
+  "stock": 50,
+  "sold_out": 10,
+  "reviews": [
+    {
+      "user": "Alice Brown",
+      "comment": "Worked quickly to cure my infection.",
+      "rating": 5
+    },
+    {
+      "user": "Bob Green",
+      "comment": "Affordable and effective.",
+      "rating": 4
+    }
+  ]
+},
+{
+  "_id": {
+    "$oid": "6753557b651ff39734caffc9"
+  },
+  "is_new": false,
+  "is_trending": false,
+  "is_offer": true,
+  "top_seller": false,
+  "best_seller": true,
+  "name": "Ibuprofen 200mg Tablets",
+  "manufacturer_name": "Wellness Pharma",
+  "products_type": "Pain Reliever",
+  "generic_name": "Ibuprofen",
+  "strength": "200mg",
+  "pack_size": [
+    "20 tablets"
+  ],
+  "category": "64bdf1234567890abcdef789",
+  "brand": "64bdf1234567890abcdefabc",
+  "color": [
+    "Pink"
+  ],
+  "regular_price": "100",
+  "discount_price": "90",
+  "purchase_price": "70",
+  "short_description": "Pain reliever and anti-inflammatory medication.",
+  "product_features": [
+    "Relieves mild to moderate pain",
+    "Reduces inflammation"
+  ],
+  "additional_info": "Take with water. Do not exceed 6 tablets a day.",
+  "specificationsHtml": "<ul><li>200mg per tablet</li><li>Pack of 20 tablets</li></ul>",
+  "special_tag": "Limited Offer",
+  "tags": [
+    "pain",
+    "anti-inflammatory",
+    "medicine"
+  ],
+  "images": [
+    "ibuprofen1.jpg",
+    "ibuprofen2.jpg"
+  ],
+  "status": "active",
+  "stock": 100,
+  "sold_out": 5,
+  "reviews": [
+    {
+      "user": "John Smith",
+      "comment": "Helped with my muscle pain.",
+      "rating": 4
+    },
+    {
+      "user": "Sarah Lee",
+      "comment": "Affordable and works fast.",
+      "rating": 5
+    }
+  ]
+}]

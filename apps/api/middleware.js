@@ -1,0 +1,76 @@
+import { NextResponse } from "next/server";
+import { getStaff, rankOf, unauthorized, forbidden } from "@/lib/auth";
+
+const WRITE = ["POST", "PUT", "PATCH", "DELETE"];
+const ANY = null;
+
+// Staff-only surface. `min` is the minimum role rank (manager=1, admin=2, super-admin=3).
+// Customer-owned resources (customerProfile/*) are checked inside their route handlers.
+const rules = [
+  { re: /^\/api\/user(\/|$)/, methods: ANY, min: 2 },
+  { re: /^\/api\/adminproduct(\/|$)/, methods: ANY, min: 1 },
+  { re: /^\/api\/cloudinary(\/|$)/, methods: ANY, min: 1 },
+  { re: /^\/api\/sendmail(\/|$)/, methods: ANY, min: 1 },
+  // Raw product documents include cost price; the storefront uses /api/shop/* instead.
+  { re: /^\/api\/product$/, methods: ["GET"], min: 1 },
+  { re: /^\/api\/product\/[a-f0-9]{24}$/i, methods: ["GET"], min: 1 },
+  { re: /^\/api\/order$/, methods: ["GET"], min: 1 },
+  { re: /^\/api\/order\/[^/]+$/, methods: ["PUT", "PATCH", "DELETE"], min: 1 },
+  {
+    re: /^\/api\/(product|category|slider|banner|doctors|doccat)(\/|$)/,
+    methods: WRITE,
+    min: 1,
+  },
+  { re: /^\/api\/customerProfile\/[^/]+$/, methods: ["DELETE"], min: 1 },
+];
+
+function allowedOrigins() {
+  return (process.env.CORS_ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((o) => o.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+}
+
+function corsHeaders(origin) {
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Credentials": "true",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
+  };
+}
+
+function withCors(response, origin) {
+  if (origin) for (const [k, v] of Object.entries(corsHeaders(origin))) response.headers.set(k, v);
+  return response;
+}
+
+export async function middleware(request) {
+  const { pathname } = request.nextUrl;
+  const method = request.method;
+  const requestOrigin = request.headers.get("origin");
+  const originAllowed = requestOrigin && allowedOrigins().includes(requestOrigin);
+  const origin = originAllowed ? requestOrigin : null;
+
+  if (method === "OPTIONS") {
+    return new NextResponse(null, { status: origin ? 204 : 403, headers: origin ? corsHeaders(origin) : {} });
+  }
+
+  // Browser requests from an unknown site must never reach a state-changing handler.
+  if (requestOrigin && !originAllowed && WRITE.includes(method)) {
+    return forbidden("Origin not allowed");
+  }
+
+  const rule = rules.find((r) => r.re.test(pathname) && (r.methods === ANY || r.methods.includes(method)));
+  if (rule) {
+    const staff = await getStaff(request);
+    if (!staff) return withCors(unauthorized(), origin);
+    if (rankOf(staff.role) < rule.min) return withCors(forbidden(), origin);
+  }
+
+  return withCors(NextResponse.next(), origin);
+}
+
+export const config = { matcher: "/api/:path*" };

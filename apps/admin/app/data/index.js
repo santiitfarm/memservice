@@ -1,0 +1,217 @@
+const medicalSpecialties = [
+  {
+    id: 1,
+    categoryName: "Cardiology",
+    specialties: [
+      "Interventional Cardiology",
+      "Electrophysiology",
+      "Heart Failure Specialist",
+      "Preventive Cardiology",
+      "Pediatric Cardiology",
+    ],
+  },
+  {
+    id: 2,
+    categoryName: "Dermatology",
+    specialties: [
+      "Cosmetic Dermatology",
+      "Pediatric Dermatology",
+      "Mohs Surgery",
+      "Dermatopathology",
+      "Immunodermatology",
+    ],
+  },
+  {
+    id: 3,
+    categoryName: "Pediatrics",
+    specialties: [
+      "Neonatology",
+      "Pediatric Cardiology",
+      "Pediatric Endocrinology",
+      "Pediatric Hematology-Oncology",
+      "Pediatric Neurology",
+    ],
+  },
+  {
+    id: 4,
+    categoryName: "Orthopedics",
+    specialties: [
+      "Sports Medicine",
+      "Joint Replacement",
+      "Spine Surgery",
+      "Pediatric Orthopedics",
+      "Orthopedic Trauma",
+    ],
+  },
+  {
+    id: 5,
+    categoryName: "Gynecology",
+    specialties: [
+      "Reproductive Endocrinology",
+      "Gynecologic Oncology",
+      "Urogynecology",
+      "Maternal-Fetal Medicine",
+    ],
+  },
+  {
+    id: 6,
+    categoryName: "Neurology",
+    specialties: [
+      "Epileptology",
+      "Stroke Specialist",
+      "Pediatric Neurology",
+      "Neuroimmunology",
+      "Neurocritical Care",
+    ],
+  },
+  {
+    id: 7,
+    categoryName: "Psychiatry",
+    specialties: [
+      "Child and Adolescent Psychiatry",
+      "Geriatric Psychiatry",
+      "Forensic Psychiatry",
+      "Addiction Psychiatry",
+      "Psychosomatic Medicine",
+    ],
+  },
+  {
+    id: 8,
+    categoryName: "Ophthalmology",
+    specialties: [
+      "Retina Specialist",
+      "Cornea Specialist",
+      "Glaucoma Specialist",
+      "Pediatric Ophthalmology",
+      "Oculoplastic Surgery",
+    ],
+  },
+  {
+    id: 9,
+    categoryName: "ENT (Otolaryngology)",
+    specialties: [
+      "Rhinology",
+      "Otology/Neurotology",
+      "Laryngology",
+      "Pediatric ENT",
+      "Facial Plastic Surgery",
+    ],
+  },
+  {
+    id: 10,
+    categoryName: "Oncology",
+    specialties: [
+      "Medical Oncology",
+      "Radiation Oncology",
+      "Surgical Oncology",
+      "Pediatric Oncology",
+      "Gynecologic Oncology",
+    ],
+  },
+  {
+    id: 11,
+    categoryName: "Endocrinology",
+    specialties: [
+      "Diabetes Management",
+      "Thyroid Disorders",
+      "Pediatric Endocrinology",
+      "Adrenal Disorders",
+      "Pituitary Disorders",
+    ],
+  },
+  {
+    id: 12,
+    categoryName: "Gastroenterology",
+    specialties: [
+      "Hepatology",
+      "Pediatric Gastroenterology",
+      "Inflammatory Bowel Disease (IBD)",
+      "Esophageal Disorders",
+      "Pancreatic Diseases",
+    ],
+  },
+  {
+    id: 13,
+    categoryName: "Urology",
+    specialties: [
+      "Pediatric Urology",
+      "Urologic Oncology",
+      "Female Urology",
+      "Male Infertility",
+      "Endourology",
+    ],
+  },
+  {
+    id: 14,
+    categoryName: "Nephrology",
+    specialties: [
+      "Dialysis Specialist",
+      "Pediatric Nephrology",
+      "Transplant Nephrology",
+      "Hypertension Specialist",
+    ],
+  },
+  {
+    id: 15,
+    categoryName: "Pulmonology",
+    specialties: [
+      "Critical Care Pulmonology",
+      "Pediatric Pulmonology",
+      "Sleep Medicine",
+      "Interstitial Lung Disease Specialist",
+      "Asthma Specialist",
+    ],
+  },
+  {
+    id: 16,
+    categoryName: "Rheumatology",
+    specialties: [
+      "Pediatric Rheumatology",
+      "Lupus Specialist",
+      "Arthritis Specialist",
+      "Fibromyalgia Specialist",
+    ],
+  },
+  {
+    id: 17,
+    categoryName: "Hematology",
+    specialties: [
+      "Pediatric Hematology",
+      "Blood Clotting Disorders",
+      "Hematologic Oncology",
+      "Anemia Specialist",
+    ],
+  },
+  {
+    id: 18,
+    categoryName: "Radiology",
+    specialties: [
+      "Interventional Radiology",
+      "Pediatric Radiology",
+      "Neuroradiology",
+      "Breast Imaging",
+      "Musculoskeletal Radiology",
+    ],
+  },
+  {
+    id: 19,
+    categoryName: "Pathology",
+    specialties: [
+      "Forensic Pathology",
+      "Cytopathology",
+      "Hematopathology",
+      "Dermatopathology",
+      "Molecular Pathology",
+    ],
+  },
+  {
+    id: 20,
+    categoryName: "General Medicine",
+    specialties: [
+      "Family Medicine",
+      "Geriatric Medicine",
+      "Preventive Medicine",
+      "Lifestyle Medicine",
+    ],
+  },
+];

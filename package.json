@@ -1,0 +1,30 @@
+{
+  "name": "memservice",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Memservice monorepo: web storefront, admin dashboard and REST API",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "pnpm db:up && pnpm --parallel --filter \"./apps/*\" dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "dev:api": "pnpm --filter api dev",
+    "build": "pnpm --filter api build && pnpm --filter admin build && pnpm --filter web build",
+    "start": "pnpm --parallel --filter \"./apps/*\" start",
+    "lint": "pnpm --filter \"./apps/*\" lint",
+    "db:up": "docker compose up -d --wait mongo",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f mongo",
+    "db:seed": "node scripts/seed.mjs",
+    "db:pull-atlas": "node scripts/pull-atlas.mjs",
+    "health": "node scripts/health.mjs"
+  },
+  "devDependencies": {
+    "@next/env": "15.1.0",
+    "bcryptjs": "^2.4.3",
+    "mongoose": "^8.8.3"
+  }
+}
