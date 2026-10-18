@@ -12,9 +12,8 @@ export const usersApi = apiSlice.injectEndpoints({
       // },
     }),
     fetchUserById: builder.query({
-      query: (username) => ({
-        url: "/user",
-
+      query: (id) => ({
+        url: `/user${id ? `/${id}` : ""}`,
         method: "GET",
         providesTags: ["users"],
       }),

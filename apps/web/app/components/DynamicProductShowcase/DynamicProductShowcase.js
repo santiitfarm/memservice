@@ -32,8 +32,8 @@ function DynamicProductShowcase({
       </div>
       {/* product Cart */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-4 md:gap-6">
-        {productData.map((product, ind) => (
-          <div key={ind}>
+        {(Array.isArray(productData) ? productData : []).map((product, ind) => (
+          <div key={product?._id || ind}>
             <ColumnCard productData={product} />
           </div>
         ))}

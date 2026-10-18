@@ -2,11 +2,17 @@
 import DynamicProductShowcase from "../../DynamicProductShowcase/DynamicProductShowcase";
 
 async function BestDeals() {
-  const response = await fetch(
-    `${process.env.API_URL}/api/product/best-seller`
-  );
-  const data = await response.json();
-  const productData = data?.bestSellers;
+  let productData = [];
+  try {
+    const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const response = await fetch(`${apiUrl}/api/product/best-seller`);
+    if (response.ok) {
+      const data = await response.json();
+      productData = Array.isArray(data?.bestSellers) ? data.bestSellers : [];
+    }
+  } catch (err) {
+    console.error("Failed to fetch best sellers:", err);
+  }
 
   return (
     <section>

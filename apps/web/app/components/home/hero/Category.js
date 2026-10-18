@@ -34,11 +34,11 @@ async function Category() {
             </Link>
             {/* Subcategories */}
             {category?.subCategory && (
-              <div className="absolute z-50 top-0 left-full w-[1200px] bg-white shadow-lg hidden group-hover:block">
-                <div className="grid grid-cols-6 gap-4 p-4">
+              <div className="absolute z-50 top-0 left-full w-[600px] bg-white rounded-r-lg border border-light-mist shadow-xl hidden group-hover:block">
+                <div className="grid grid-cols-3 gap-3 p-4">
                   {category?.subCategory.map((subCategory, subInd) => (
-                    <div key={subInd} className="text-gray-700">
-                      <p>{subCategory?.name}</p>
+                    <div key={subInd} className="text-gray-700 hover:text-sky-blue">
+                      <p className="text-sm font-medium">{subCategory?.name}</p>
                     </div>
                   ))}
                 </div>

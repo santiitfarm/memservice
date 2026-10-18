@@ -22,13 +22,12 @@ export async function POST(req) {
     const firstName = formData.get("first_name");
     const lastName = formData.get("last_name");
     const email = formData.get("email");
-    const username = formData.get("username");
     const phone = formData.get("phone");
     const password = formData.get("password");
     const status = formData.get("status");
     const role = formData.get("role");
 
-    if (!firstName || !lastName || !email || !username || !phone || !password || !status || !role) {
+    if (!firstName || !lastName || !email || !phone || !password || !status || !role) {
       return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 }
@@ -45,11 +44,10 @@ export async function POST(req) {
     }
 
     const created = await User.create({
-      first_name: firstName,
-      last_name: lastName,
-      email,
-      username,
-      phone,
+      first_name: String(firstName).trim(),
+      last_name: String(lastName).trim(),
+      email: String(email).trim().toLowerCase(),
+      phone: String(phone).trim(),
       password: await bcrypt.hash(password, 10),
       status,
       role,
@@ -64,7 +62,7 @@ export async function POST(req) {
     console.error("Error creating user:", error);
     const duplicate = error?.code === 11000;
     return NextResponse.json(
-      { error: duplicate ? "Email, phone or username already exists" : "Failed to create user" },
+      { error: duplicate ? "Email or phone already exists" : "Failed to create user" },
       { status: duplicate ? 409 : 500 }
     );
   }

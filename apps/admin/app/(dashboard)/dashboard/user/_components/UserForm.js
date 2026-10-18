@@ -33,7 +33,6 @@ const UserForm = ({ onClose, user, isEdit }) => {
     formData.append("first_name", data.first_name);
     formData.append("last_name", data.last_name);
     formData.append("email", data.email);
-    formData.append("username", data.username);
     formData.append("phone", data.phone);
     formData.append("password", data.password);
     formData.append("role", data.role);
@@ -81,20 +80,6 @@ const UserForm = ({ onClose, user, isEdit }) => {
           {errors.last_name && (
             <span className="absolute -bottom-6 left-0 text-red-500 text-sm">
               {errors.last_name.message}
-            </span>
-          )}
-        </div>
-
-        <div className="relative">
-          <input
-            {...register("username", { required: "Username is required" })}
-            type="text"
-            className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 outline-none dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:focus:ring-blue-500"
-            placeholder="Enter  username"
-          />
-          {errors.username && (
-            <span className="absolute -bottom-6 left-0 text-red-500 text-sm">
-              {errors.username.message}
             </span>
           )}
         </div>

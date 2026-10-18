@@ -1,6 +1,7 @@
 import { CustomerProfile } from "@/app/models/customer-profile-model";
 import { signCustomerToken } from "@/lib/auth";
 import { SAFE_CUSTOMER_FIELDS } from "@/lib/customer";
+import { normalizeBdPhone } from "@/lib/phone";
 import { rateLimit } from "@/lib/rateLimit";
 import connectMongo from "@/services/mongo";
 import bcrypt from "bcryptjs";
@@ -16,22 +17,45 @@ export async function POST(req) {
 
   try {
     await connectMongo();
-    const { phone, password } = await req.json();
-    const invalid = () =>
-      NextResponse.json(
+    const body = await req.json().catch(() => ({}));
+    const { phone, password } = body;
+
+    const normalizedPhone = normalizeBdPhone(phone);
+    if (!normalizedPhone || !password) {
+      return NextResponse.json(
         { error: "Invalid phone number or password." },
         { status: 401 }
       );
-    if (!phone || !password) return invalid();
+    }
 
     const customer = await CustomerProfile.findOne({
-      phone_number: String(phone).trim(),
+      phone_number: normalizedPhone,
     });
-    if (
-      !customer?.password ||
-      !(await bcrypt.compare(password, customer.password))
-    ) {
-      return invalid();
+
+    if (!customer) {
+      return NextResponse.json(
+        { error: "Invalid phone number or password." },
+        { status: 401 }
+      );
+    }
+
+    // A profile created during guest checkout has no password set yet
+    if (!customer.password) {
+      return NextResponse.json(
+        {
+          error:
+            "This account was created during guest checkout without a password. Please use 'Forgot Password' or Register to set one.",
+          code: "GUEST_ACCOUNT_NO_PASSWORD",
+        },
+        { status: 401 }
+      );
+    }
+
+    if (!(await bcrypt.compare(password, customer.password))) {
+      return NextResponse.json(
+        { error: "Invalid phone number or password." },
+        { status: 401 }
+      );
     }
 
     const safe = await CustomerProfile.findById(customer._id)

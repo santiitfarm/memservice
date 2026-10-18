@@ -115,8 +115,8 @@ Next route files may only export HTTP handlers; put helpers in `lib/`.
 - Server actions: `app/actions/index.js` (login/logout). Middleware: `middleware.js` (role-aware route guard).
 
 ### 0.8 Seeded local accounts (`pnpm db:seed`)
-`superadmin / SuperAdmin@123`, `admin / Admin@12345`, `manager / Manager@123`, `inactive / Inactive@123` (inactive), `user / User@12345` (rank 0).
-Phase 1 replaces usernames with emails (`superadmin@memservice.local`, ...). Seed also creates 6 products, 3 categories, 3 brands, 3 banners. No sliders, no doctors.
+`superadmin@memservice.local / SuperAdmin@123`, `admin@memservice.local / Admin@12345`, `manager@memservice.local / Manager@123`, `inactive@memservice.local / Inactive@123` (inactive), `user@memservice.local / User@12345` (rank 0).
+Phase 1 replaces usernames with emails. Seed also creates 6 products, 3 categories, 3 brands, 3 banners, 4 sample doctors, and doccategories.
 
 ### 0.9 Engineering rules (apply to every phase)
 1. **Do not change business logic** unless the phase says so (pricing, stock, order flow, payment flow, roles). Design/layout/CMS wiring only.

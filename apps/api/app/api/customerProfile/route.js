@@ -7,6 +7,7 @@ import {
   SAFE_CUSTOMER_FIELDS,
 } from "@/lib/customer";
 import { rateLimit } from "@/lib/rateLimit";
+import { normalizeBdPhone } from "@/lib/phone";
 import connectMongo from "@/services/mongo";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
@@ -61,15 +62,25 @@ export async function POST(req) {
 
   try {
     await connectMongo();
-    const { name, phone, password } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { name, phone, password } = body;
 
-    if (!name?.trim() || !phone?.trim() || !password) {
+    if (!name?.trim() || !phone || !password) {
       return NextResponse.json(
         { message: "Name, phone and password are required." },
         { status: 400 }
       );
     }
-    if (password.length < MIN_PASSWORD_LENGTH) {
+
+    const normalizedPhone = normalizeBdPhone(phone);
+    if (!normalizedPhone) {
+      return NextResponse.json(
+        { message: "Please enter a valid 11-digit Bangladeshi mobile number (e.g. 01712345678)." },
+        { status: 400 }
+      );
+    }
+
+    if (String(password).length < MIN_PASSWORD_LENGTH) {
       return NextResponse.json(
         {
           message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
@@ -80,7 +91,7 @@ export async function POST(req) {
 
     const hashed = await bcrypt.hash(password, 10);
     const existing = await CustomerProfile.findOne({
-      phone_number: phone.trim(),
+      phone_number: normalizedPhone,
     });
 
     if (existing) {
@@ -106,7 +117,7 @@ export async function POST(req) {
 
     await CustomerProfile.create({
       customer_name: name.trim(),
-      phone_number: phone.trim(),
+      phone_number: normalizedPhone,
       password: hashed,
     });
     return NextResponse.json(

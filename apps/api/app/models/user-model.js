@@ -5,32 +5,35 @@ const userSchema = new Schema(
     first_name: {
       type: String,
       required: true,
+      trim: true,
     },
     last_name: {
       type: String,
       required: true,
-    },
-    phone: {
-      type: String,
+      trim: true,
     },
     email: {
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
     },
     phone: {
       type: String,
       required: true,
       unique: true,
-    },
-    username: {
-      type: String,
-      required: true,
-      unique: true,
+      trim: true,
     },
     password: {
       type: String,
       required: true,
+    },
+    passwordResetToken: {
+      type: String,
+    },
+    passwordResetExpires: {
+      type: Date,
     },
     status: {
       type: String,
@@ -47,11 +50,14 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-userSchema.index(
-  { email: 1, phone: 1, username: 1, createdAt: -1 },
-  { unique: true }
-);
 userSchema.virtual("full_name").get(function () {
   return `${this.first_name} ${this.last_name}`;
 });
+
+if (process.env.NODE_ENV !== "production" && mongoose.models.User) {
+  if (mongoose.models.User.schema?.paths?.username) {
+    delete mongoose.models.User;
+  }
+}
+
 export const User = mongoose.models.User ?? mongoose.model("User", userSchema);

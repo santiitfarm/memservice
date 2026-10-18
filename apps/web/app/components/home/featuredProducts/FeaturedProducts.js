@@ -2,11 +2,17 @@
 import DynamicProductShowcase from "../../DynamicProductShowcase/DynamicProductShowcase";
 
 async function FeaturedProducts() {
-  const response = await fetch(
-    `${process.env.API_URL}/api/product/new-arrival`
-  );
-  const data = await response.json();
-  const productData = data?.new_products;
+  let productData = [];
+  try {
+    const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const response = await fetch(`${apiUrl}/api/product/new-arrival`);
+    if (response.ok) {
+      const data = await response.json();
+      productData = Array.isArray(data?.new_products) ? data.new_products : [];
+    }
+  } catch (err) {
+    console.error("Failed to fetch featured products:", err);
+  }
 
   return (
     <section>

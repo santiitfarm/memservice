@@ -40,9 +40,13 @@ export default async function middleware(req) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
   }
 
+  if ((path.startsWith("/forgot-password") || path.startsWith("/reset-password")) && isStaff) {
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin-login"],
+  matcher: ["/dashboard/:path*", "/admin-login", "/forgot-password", "/reset-password"],
 };

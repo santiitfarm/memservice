@@ -19,16 +19,19 @@ export async function POST(req) {
 
   try {
     await connectMongo();
-    const { email } = await req.json();
-    if (!email) {
+    const body = await req.json().catch(() => ({}));
+    const rawEmail = body?.email;
+    const normalizedEmail = String(rawEmail || "").trim().toLowerCase();
+
+    if (!normalizedEmail) {
       return NextResponse.json({ error: "Email is required." }, { status: 400 });
     }
 
     const customer = await CustomerProfile.findOne({
-      email: String(email).trim().toLowerCase(),
+      email: normalizedEmail,
     });
     // Same response whether or not the account exists (no account enumeration).
-    if (!customer) return NextResponse.json(generic);
+    if (!customer || !customer.email) return NextResponse.json(generic);
 
     const resetToken = crypto.randomBytes(4).toString("hex");
     customer.passwordResetToken = crypto
@@ -37,6 +40,10 @@ export async function POST(req) {
       .digest("hex");
     customer.passwordResetExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
     await customer.save();
+
+    if (process.env.NODE_ENV !== "production" || !process.env.RESEND_API_KEY) {
+      console.log(`\n[customer-forgot] Password reset code for ${customer.email}: ${resetToken}\n`);
+    }
 
     await sendMail({
       to: customer.email,

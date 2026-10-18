@@ -136,7 +136,7 @@ const ConsultationPage = () => {
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-10'>
                 {
                     departments.map((dep, indx) => (
-                        <Link href={`consultation/${dep?.name.toLowerCase()}`} key={indx} className=" p-4 shadow-lg rounded-lg">
+                        <Link href={`/consultation/${dep?.name.toLowerCase()}`} key={indx} className=" p-4 shadow-lg rounded-lg">
                             <div className="flex gap-5">
 
                                 <Image width="96" height="96" src={dep?.icons} alt="external-cardiology-department-in-the-hospital-with-a-heart-and-an-oscillating-wave-logotype-hospital-shadow-tal-revivo" />

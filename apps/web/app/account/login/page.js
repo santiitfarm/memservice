@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import loginImage from "../../../assets/loginImg.svg";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ResetPasswordModal from "../_components/ResetPasswordModal";
 
 const inputFieldContainerStyle =
@@ -12,12 +12,15 @@ const inputFieldContainerStyle =
 const inputFieldStyle =
   "w-full py-4 px-5 rounded border border-gray-300 focus:border-sky-blue transition-all duration-300 text-sm outline-none";
 
-function Login() {
+function LoginForm() {
   const [formData, setFormData] = useState({
     phone: "",
     password: "",
   });
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const registered = searchParams.get("registered");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState({
     status: false,
@@ -33,25 +36,53 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    const result = await signIn("credentials", {
-      redirect: false, // Prevent automatic redirect by NextAuth
-      phone: formData.phone,
-      password: formData.password,
-    });
+    setError({ status: false, message: "" });
 
-    if (!result?.error) {
-      setIsLoading(false);
-      // Redirect to the desired route
-      router.push("/account"); // Change this to your desired route
-    } else {
-      setIsLoading(false);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      const checkRes = await fetch(`${apiUrl}/api/customerProfile/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: formData.phone.trim(),
+          password: formData.password,
+        }),
+      });
 
+      const checkData = await checkRes.json().catch(() => ({}));
+
+      if (!checkRes.ok) {
+        setIsLoading(false);
+        setError({
+          status: true,
+          message:
+            checkData.error ||
+            "Invalid phone number or password. Please try again.",
+        });
+        return;
+      }
+
+      const result = await signIn("credentials", {
+        redirect: false,
+        phone: formData.phone.trim(),
+        password: formData.password,
+      });
+
+      setIsLoading(false);
+      if (!result?.error) {
+        router.push("/account");
+      } else {
+        setError({
+          status: true,
+          message: "Unable to sign in. Please verify your credentials.",
+        });
+      }
+    } catch (err) {
+      setIsLoading(false);
       setError({
         status: true,
-        message: "Invalid phone number or password",
+        message: "Network error occurred. Please try again.",
       });
-      console.error("Login failed:", result);
-      // Show error message or handle failure
     }
   };
 
@@ -69,6 +100,12 @@ function Login() {
             Please Login using account details below.
           </p>
         </div>
+
+        {registered && (
+          <div className="p-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-sm text-center font-medium">
+            Account created successfully! Please sign in with your phone number and password.
+          </div>
+        )}
 
         <div className="flex flex-col gap-3">
           <div className={inputFieldContainerStyle}>
@@ -147,4 +184,10 @@ function Login() {
   );
 }
 
-export default Login;
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-12 text-center text-sm text-gray-400">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}

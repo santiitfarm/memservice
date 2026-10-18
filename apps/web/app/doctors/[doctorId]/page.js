@@ -10,48 +10,63 @@ import Link from "next/link";
 
 const DoctorDetailsPage = async ({ params }) => {
   const { doctorId } = await params;
-  // console.log(doctorId);
+  let doctor = null;
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/doctors/${doctorId}`
-  );
-  const data = await response.json();
-  const doctor = data?.doctor;
+  try {
+    const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const response = await fetch(
+      `${apiUrl}/api/doctors/${doctorId}`,
+      { cache: "no-store" }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      doctor = data?.doctor || null;
+    }
+  } catch (err) {
+    console.error("Failed to fetch doctor:", err);
+  }
 
-  // const date = new Date(doctor?.createdAt).toLocaleDateString('en-US')
-  const date = new Date("2024-12-25T18:12:58.194Z");
+  if (!doctor) {
+    return (
+      <section className="container mx-auto px-4 md:px-6 py-16 text-center">
+        <h2 className="text-2xl font-bold text-deep-sea-blue">Doctor Not Found</h2>
+        <p className="text-gray-500 mt-2">The requested doctor profile could not be found or is no longer available.</p>
+        <Link href="/consultation/doctor" className="mt-6 inline-block bg-sky-blue text-white px-6 py-2.5 rounded-lg font-medium hover:bg-sky-600">
+          Back to Doctors List
+        </Link>
+      </section>
+    );
+  }
 
-  // Format the date
+  const date = doctor?.createdAt ? new Date(doctor.createdAt) : new Date();
   const options = { year: "numeric", month: "long", day: "numeric" };
   const formattedDate = date.toLocaleDateString("en-US", options);
 
-  // console.log(formattedDate);  // Outputs: "December 25, 2024"
-
-  // const [isOpen, setIsOpen] = useState({ info: true, experience: false })
-
-  // const handelOpen = (buttonName) => {
-  //     if (buttonName === 'info') {
-  //         setIsOpen({ info: true, experience: false })
-  //     }
-  //     if (buttonName === "experience") {
-  //         setIsOpen({ info: false, experience: true })
-  //     }
-  // }
+  const initials = (doctor?.name || "DR")
+    .replace(/^Dr\.?\s*/i, "")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <section className="container mx-auto px-2 md:px-6">
+    <section className="container mx-auto px-2 md:px-6 py-6">
       <div className="border rounded-xl shadow-md px-4 p-5">
         <div className="grid grid-cols-12 items-center justify-between">
           <div className="col-span-12 md:col-span-8">
-            <div className="flex md:flex-row gap-4 md:gap-5">
-              <div className="p-1 border-2 rounded-md border-blue-500">
-                <Image
-                  src={doctor?.image}
-                  width={500}
-                  height={500}
-                  alt="doctor?.name"
-                  className="rounded-lg object-cover w-[10.5rem] h-[13.5rem]"
-                />
+            <div className="flex flex-col sm:flex-row gap-4 md:gap-5">
+              <div className="p-1 border-2 rounded-md border-blue-500 shrink-0 self-start">
+                {doctor?.image ? (
+                  <Image
+                    src={doctor.image}
+                    width={500}
+                    height={500}
+                    alt={doctor.name || "Doctor"}
+                    className="rounded-lg object-cover w-[10.5rem] h-[13.5rem]"
+                  />
+                ) : (
+                  <div className="rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center font-bold text-3xl w-[10.5rem] h-[13.5rem] border border-sky-200">
+                    {initials}
+                  </div>
+                )}
               </div>
               <div className="py-2 space-y-1 my-auto">
                 <h1 className="text-[#212529] font-bold text-2xl">

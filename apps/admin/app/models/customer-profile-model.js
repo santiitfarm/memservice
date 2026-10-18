@@ -8,7 +8,6 @@ const customerProfileSchema = new Schema({
   password: { type: String },
   orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
   others: { type: String },
-  username: { type: String },
   passwordResetToken: { type: String },
   passwordResetExpires: { type: Date },
 });

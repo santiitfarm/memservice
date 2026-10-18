@@ -26,6 +26,24 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.name.trim()) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+
+    // Client-side BD mobile validation
+    const digits = formData.phone.replace(/\D/g, "");
+    const bdPhone = digits.startsWith("8801") && digits.length === 13 ? digits.slice(2) : digits;
+    if (!/^01[3-9]\d{8}$/.test(bdPhone)) {
+      toast.error("Please enter a valid 11-digit Bangladeshi mobile number (e.g. 01712345678).");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      toast.error("Password must be at least 8 characters long.");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match!");
       return;
@@ -39,24 +57,23 @@ function Register() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData), // Convert the data to JSON
+          body: JSON.stringify({
+            name: formData.name.trim(),
+            phone: bdPhone,
+            password: formData.password,
+          }),
         }
       );
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        // Handle non-successful responses
-        const errorData = await res.json();
-        console.error("Error:", errorData);
-        toast.error(
-          `Failed to register: ${errorData.message || "Unknown error"}`
-        );
+        toast.error(data.message || data.error || "Failed to register. Please check your details.");
         return;
       }
 
-      const data = await res.json();
-
-      toast.success("Registration successful!"); // Notify the user
-      router.push("/account/login");
+      toast.success("Registration successful! Please log in with your credentials.");
+      router.push("/account/login?registered=1");
     } catch (error) {
       console.error("Error during registration:", error);
       toast.error("An error occurred. Please try again.");

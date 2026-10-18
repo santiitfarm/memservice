@@ -7,7 +7,7 @@ export const SAFE_CUSTOMER_FIELDS =
 export const escapeRegex = (value) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-export const MIN_PASSWORD_LENGTH = 6;
+export const MIN_PASSWORD_LENGTH = 8;
 
 /**
  * Resolves who is calling and whether they may act on `customerId`.

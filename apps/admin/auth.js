@@ -19,7 +19,9 @@ import { User } from "./app/models/user-model";
 import connectMongo from "./services/mongo";
 import { createSession } from "./lib/session";
 import { rankOf } from "./lib/roles";
-// Your own logic for dealing with plaintext password strings; be careful!
+
+// Pre-computed bcrypt hash used for constant-time comparison when user is not found
+const DUMMY_HASH = "$2a$10$CwTycUXWue0Thq9StjUM0uJ8w0xU.9u0QyZ2h4K7w1g8.z8p8J8i6";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
@@ -29,23 +31,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        username: { label: "Username", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
+        const rawEmail = credentials?.email;
+        const rawPassword = credentials?.password;
+        if (!rawEmail || !rawPassword) {
           return null;
         }
-        await connectMongo();
-        const user = await User.findOne({
-          username: credentials.username,
-        }).lean();
 
-        const passwordOk =
-          user && (await bcrypt.compare(credentials.password, user.password));
+        const email = String(rawEmail).trim().toLowerCase();
+        await connectMongo();
+        const user = await User.findOne({ email }).lean();
+
+        // Always run bcrypt.compare to maintain constant-time response profile
+        const targetHash = user?.password || DUMMY_HASH;
+        const passwordOk = await bcrypt.compare(rawPassword, targetHash);
+
         // Only active staff (manager and above) may use the dashboard.
         const allowed =
-          passwordOk && user.status === "active" && rankOf(user.role) >= 1;
+          Boolean(user) && passwordOk && user.status === "active" && rankOf(user.role) >= 1;
 
         if (allowed) {
           const id = String(user._id);
@@ -54,7 +60,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           await createSession({ id, email: user.email, name, role: user.role });
           return {
             id,
-            username: user.username,
             email: user.email,
             phone: user.phone,
             role: user.role,
@@ -69,10 +74,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        // //console.log("user FROM JWT", user);
-        // //console.log("TOKEN FROM JWT", token);
         token.id = user.id;
-        token.username = user.username;
         token.email = user.email;
         token.role = user.role;
         token.name = user.name;
@@ -84,7 +86,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token) {
         session.user = {
           id: token.id,
-          username: token.username,
           email: token.email,
           role: token.role,
           name: token.name,

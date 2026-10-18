@@ -36,7 +36,6 @@ const UserDashboardSkeleton = () => {
                 <tr>
                   {[
                     "User",
-                    "Username",
                     "Phone",
                     "Status",
                     "Role",

@@ -18,9 +18,11 @@
     "db:up": "docker compose up -d --wait mongo",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f mongo",
+    "db:migrate": "node scripts/migrate-users-email-login.mjs",
     "db:seed": "node scripts/seed.mjs",
     "db:pull-atlas": "node scripts/pull-atlas.mjs",
-    "health": "node scripts/health.mjs"
+    "health": "node scripts/health.mjs",
+    "test:phase1": "node scripts/verify-phase1.mjs"
   },
   "devDependencies": {
     "@next/env": "15.1.0",
