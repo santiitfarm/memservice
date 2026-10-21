@@ -222,7 +222,7 @@ Reproduce each in headless Chrome (capture console errors + a screenshot), find 
 - `pnpm lint`, `pnpm build` pass. Update Part 0 of `docs/implement-phase.md` and `.env.example` if anything changed.
 Finish with a concise report: root causes found, files changed, what was not testable.
 
----
+
 
 # Phase 2 - Design system, dark/light theme, dashboard shell
 
