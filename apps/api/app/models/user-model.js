@@ -46,6 +46,15 @@ const userSchema = new Schema(
       default: "user",
       required: true,
     },
+    avatar: {
+      type: String,
+      default: "",
+    },
+    theme: {
+      type: String,
+      enum: ["system", "light", "dark"],
+      default: "system",
+    },
   },
   { timestamps: true }
 );

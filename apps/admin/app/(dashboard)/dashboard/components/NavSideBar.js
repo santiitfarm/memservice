@@ -18,6 +18,17 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Ticket,
+  MessageSquare,
+  CalendarDays,
+  Sliders,
+  Layout,
+  Menu as MenuIcon,
+  FileText,
+  HelpCircle,
+  Truck,
+  Layers,
+  UserCheck,
 } from "lucide-react";
 import DarkMood from "./ui/DarkMood";
 import { logout } from "@/app/actions";
@@ -66,9 +77,9 @@ export default function NavSideBar({ setIsCollapsed, isCollapsed, isSmall }) {
           label: "Brands",
         },
         {
-          href: "/dashboard/banners",
-          icon: ImageIcon,
-          label: "Banners",
+          href: "/dashboard/coupons",
+          icon: Ticket,
+          label: "Coupons",
         },
       ],
     },
@@ -81,20 +92,86 @@ export default function NavSideBar({ setIsCollapsed, isCollapsed, isSmall }) {
           label: "Orders",
         },
         {
+          href: "/dashboard/reviews",
+          icon: MessageSquare,
+          label: "Reviews",
+        },
+        {
           href: "/dashboard/doctors",
           icon: Stethoscope,
           label: "Doctors",
         },
+        {
+          href: "/dashboard/appointments",
+          icon: CalendarDays,
+          label: "Appointments",
+        },
       ],
     },
     {
-      title: "Settings",
+      title: "Content (CMS)",
       items: [
+        {
+          href: "/dashboard/cms/settings",
+          icon: Sliders,
+          label: "Site Settings",
+        },
+        {
+          href: "/dashboard/cms/home-layout",
+          icon: Layout,
+          label: "Home Layout",
+        },
+        {
+          href: "/dashboard/cms/menus",
+          icon: MenuIcon,
+          label: "Menus",
+        },
+        {
+          href: "/dashboard/cms/pages",
+          icon: FileText,
+          label: "Pages",
+        },
+        {
+          href: "/dashboard/cms/faqs",
+          icon: HelpCircle,
+          label: "FAQs",
+        },
+        {
+          href: "/dashboard/cms/media",
+          icon: ImageIcon,
+          label: "Media Library",
+        },
+        {
+          href: "/dashboard/banners",
+          icon: ImageIcon,
+          label: "Banners",
+        },
+      ],
+    },
+    {
+      title: "Operations & Settings",
+      items: [
+        {
+          href: "/dashboard/delivery",
+          icon: Truck,
+          label: "Delivery Zones",
+        },
+        {
+          href: "/dashboard/integrations",
+          icon: Layers,
+          label: "Integration Hub",
+          minRank: 2,
+        },
         {
           href: "/dashboard/user",
           icon: Users,
           label: "Staff & Users",
           minRank: 2,
+        },
+        {
+          href: "/dashboard/profile",
+          icon: UserCheck,
+          label: "Profile & Security",
         },
       ],
     },
@@ -110,6 +187,7 @@ export default function NavSideBar({ setIsCollapsed, isCollapsed, isSmall }) {
       ],
     },
   ];
+
 
   const handleSignOut = async () => {
     const res = await logout();

@@ -7,6 +7,7 @@ const ANY = null;
 // Staff-only surface. `min` is the minimum role rank (manager=1, admin=2, super-admin=3).
 // Customer-owned resources (customerProfile/*) are checked inside their route handlers.
 const rules = [
+  { re: /^\/api\/user\/(profile|security)(\/|$)/, methods: ANY, min: 1 },
   { re: /^\/api\/user(\/|$)/, methods: ANY, min: 2 },
   { re: /^\/api\/adminproduct(\/|$)/, methods: ANY, min: 1 },
   { re: /^\/api\/cloudinary(\/|$)/, methods: ANY, min: 1 },
@@ -56,6 +57,10 @@ const rules = [
 
   // Staff Analytics
   { re: /^\/api\/analytics(\/|$)/, methods: ANY, min: 1 },
+
+  // Staff Coupons Management
+  { re: /^\/api\/coupons$/, methods: ANY, min: 1 },
+  { re: /^\/api\/coupons\/[a-f0-9]{24}$/i, methods: ANY, min: 1 },
 ];
 
 function allowedOrigins() {
