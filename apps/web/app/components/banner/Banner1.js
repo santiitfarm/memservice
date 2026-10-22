@@ -1,51 +1,39 @@
 import Image from "next/image";
 import Link from "next/link";
 
-async function Banner1() {
-  let bannerData = [];
-  try {
-    const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    const response = await fetch(`${apiUrl}/api/banner`);
-    if (response.ok) {
-      const data = await response.json();
-      bannerData = (data?.banner ?? []).slice(0, 3);
-    }
-  } catch (err) {
-    console.error("Failed to fetch banners:", err);
-  }
+export default function Banner1({ banners = [] }) {
+  // Use banners marked as home-grid-1 or first 3
+  const bannerGrid = banners.filter((b) => b.group === "home-grid-1");
+  const items = bannerGrid.length > 0 ? bannerGrid : banners.slice(0, 3);
 
-  if (!bannerData.length) return null;
+  if (!items || items.length === 0) return null;
 
   return (
-    <section className="relative container mx-auto px-3 lg:px-6">
-      {bannerData.length > 0 && (
-        <div className="w-full h-full grid md:grid-cols-4 lg:grid-cols-3 gap-3 sm:gap-4">
-          {bannerData.map((banner, ind) => {
-            const prodId = banner?.productId?._id || banner?.productId || "";
-            return (
-              <Link
-                href={prodId ? `/product/${prodId}` : "/shop"}
-                key={banner?._id || ind}
-                className={`${
-                  ind === 0
-                    ? " md:col-span-4 lg:col-span-1"
-                    : " md:col-span-2 lg:col-span-1"
-                } w-full max-h-64 overflow-hidden rounded-lg`}
-              >
-                <Image
-                  className="w-full h-full object-cover transition-all duration-300"
-                  src={banner?.image || "/assets/banner/banner1.jpg"}
-                  width={400}
-                  height={400}
-                  alt={banner?.title || "Banner"}
-                />
-              </Link>
-            );
-          })}
-        </div>
-      )}
+    <section className="container mx-auto px-3 lg:px-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.map((banner, ind) => {
+          const prod = banner?.productId;
+          const targetUrl = prod
+            ? `/product/${prod.slug || prod._id || prod.id || prod}`
+            : banner?.link || "/shop";
+
+          return (
+            <Link
+              key={banner?._id || ind}
+              href={targetUrl}
+              className="relative w-full aspect-[21/9] sm:aspect-[16/7] lg:aspect-[16/8] overflow-hidden rounded-2xl border border-border shadow-sm group bg-muted/20"
+            >
+              <Image
+                src={banner?.image || "/assets/banner/01.jpg"}
+                alt={banner?.title || `Banner ${ind + 1}`}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            </Link>
+          );
+        })}
+      </div>
     </section>
   );
 }
-
-export default Banner1;

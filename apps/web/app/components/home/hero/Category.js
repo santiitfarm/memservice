@@ -1,61 +1,63 @@
-import Image from "next/image";
 import Link from "next/link";
-//import lucide icon
 import { ChevronRight } from "lucide-react";
 
-async function Category() {
-  const response = await fetch(`${process.env.API_URL}/api/category`);
-  const data = await response.json();
-  const categoryData = data?.categories ?? [];
+export default function Category({ categories = [] }) {
+  if (!categories || categories.length === 0) return null;
 
-  if (!categoryData.length) return null;
+  // Limit sidebar categories to top 10 for clean alignment with hero banner height
+  const displayCategories = categories.slice(0, 10);
 
   return (
-    <section className="relative flex max-h-[475px] w-full flex-col rounded-lg border border-border bg-card shadow-sm">
-      <h2 className="border-b border-border bg-muted/40 px-6 py-3 text-xs font-bold uppercase tracking-widest text-foreground rounded-t-lg">
-        Categories
+    <section className="relative flex w-full flex-col rounded-xl border border-border bg-card shadow-sm h-full">
+      <h2 className="border-b border-border bg-muted/40 px-5 py-3 text-xs font-bold uppercase tracking-wider text-foreground rounded-t-xl flex items-center justify-between">
+        <span>Categories</span>
+        <span className="text-[10px] text-muted-foreground font-semibold lowercase">All</span>
       </h2>
-      {/* Category Sidebar */}
-      <div className="overflow-y-visible">
-        {categoryData.map((category, ind) => (
-          <div key={ind} className="group relative">
-            <Link
-              href={`/shop?category=${encodeURIComponent(category?.categoryName)}`}
-              className="capitalize text-foreground transition-all duration-200 hover:bg-muted/60 hover:text-primary text-[14px] font-medium block px-6 py-2.5 border-b border-border last:border-b-0"
-            >
-              <p className="flex items-center justify-between">
-                <span>{category?.categoryName}</span>
-                {category?.subCategory && category.subCategory.length > 0 && (
-                  <span className="transition-all duration-200 group-hover:translate-x-1 text-muted-foreground group-hover:text-primary">
-                    <ChevronRight size={15} strokeWidth={1.5} />
-                  </span>
+
+      {/* Categories Vertical Rail */}
+      <div className="py-1">
+        {displayCategories.map((category, ind) => {
+          const hasSubs = category?.subCategory && category.subCategory.length > 0;
+          const catSlug = category?.slug || category?.categoryName;
+
+          return (
+            <div key={category._id || ind} className="group relative">
+              <Link
+                href={`/shop?category=${encodeURIComponent(catSlug)}`}
+                className="flex items-center justify-between px-5 py-2.5 text-xs font-medium text-foreground hover:bg-muted/70 hover:text-primary transition-colors border-b border-border/40 last:border-b-0"
+              >
+                <span className="truncate pr-2">{category?.categoryName}</span>
+                {hasSubs && (
+                  <ChevronRight
+                    size={14}
+                    className="shrink-0 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all"
+                  />
                 )}
-              </p>
-            </Link>
-            {/* Subcategories Flyout */}
-            {category?.subCategory && category.subCategory.length > 0 && (
-              <div className="absolute z-50 top-0 left-full ml-1 w-[480px] bg-card rounded-lg border border-border shadow-2xl hidden group-hover:block p-4">
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 pb-2 border-b border-border">
-                  {category?.categoryName} Subcategories
+              </Link>
+
+              {/* Subcategories Flyout Dropdown */}
+              {hasSubs && (
+                <div className="absolute top-0 left-full ml-2 w-72 sm:w-80 rounded-xl border border-border bg-card shadow-2xl p-4 hidden group-hover:block z-50 animate-in fade-in-50 zoom-in-95 duration-150">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3 pb-2 border-b border-border">
+                    {category?.categoryName}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {category.subCategory.map((sub, sIdx) => (
+                      <Link
+                        key={sIdx}
+                        href={`/shop?category=${encodeURIComponent(catSlug)}&subCategory=${encodeURIComponent(sub?.name || sub)}`}
+                        className="text-xs font-medium text-muted-foreground hover:text-primary hover:bg-muted/60 p-2 rounded-lg transition-colors truncate"
+                      >
+                        {sub?.name || sub}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {category?.subCategory.map((subCategory, subInd) => (
-                    <Link
-                      key={subInd}
-                      href={`/shop?category=${encodeURIComponent(category?.categoryName)}&subCategory=${encodeURIComponent(subCategory?.name)}`}
-                      className="text-xs font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 p-2 rounded-md transition-colors"
-                    >
-                      {subCategory?.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
 }
-
-export default Category;

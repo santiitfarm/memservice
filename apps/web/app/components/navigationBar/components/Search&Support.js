@@ -1,156 +1,160 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-// import components
-import SearchCompo from "./Search";
-
-// import react icon
-import { Menu, Search } from "lucide-react";
+import Search from "./Search";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import { Menu as MenuIcon, PhoneCall, X } from "lucide-react";
 import { PiPhoneCallThin } from "react-icons/pi";
-import { X, PhoneCall } from "lucide-react";
-
-// shadcn/ui components
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ThemeToggle from "@/components/ui/ThemeToggle";
 
-async function SearchAndSupport({ menuData }) {
-  const response = await fetch(`${process.env.API_URL}/api/category`);
-  const data = await response.json();
-  const categoryData = data?.categories;
+export default function SearchAndSupport({ site, menus, categories = [] }) {
+  const contactPhone = site?.contact?.phone || "+8801711655686";
+  const rawPhone = contactPhone.replace(/[^0-9+]/g, "");
+  const headerMenus = menus?.header || [];
+  const logoLight = site?.logoLight || "/assets/logo/logo.png";
+  const logoDark = site?.logoDark || site?.logoLight || "/assets/logo/logo.png";
+  const siteName = site?.siteName || "Mem Service";
 
   return (
-    <section className="flex items-center justify-between gap-6 lg:gap-12 py-2">
-      {/* Logo Section */}
-      <Link href={"/"}>
-        <Image
-          className="w-auto max-h-12 sm:max-h-14 lg:max-h-16 object-contain"
-          src={"/assets/logo/logo.png"}
-          width={400}
-          height={400}
-          alt="Mem Service"
-        />
+    <section className="flex items-center justify-between gap-4 lg:gap-8 py-3">
+      {/* Dynamic Logo Section with Light/Dark Mode Switch */}
+      <Link href="/" className="shrink-0 flex items-center group">
+        {/* Render light logo in light mode, dark logo in dark mode */}
+        <div className="relative h-10 sm:h-12 lg:h-14 w-auto flex items-center">
+          <Image
+            className="w-auto h-full max-h-10 sm:max-h-12 lg:max-h-14 object-contain dark:hidden transition-transform group-hover:scale-[1.02]"
+            src={logoLight}
+            width={260}
+            height={60}
+            alt={siteName}
+            priority
+          />
+          <Image
+            className="w-auto h-full max-h-10 sm:max-h-12 lg:max-h-14 object-contain hidden dark:block transition-transform group-hover:scale-[1.02]"
+            src={logoDark}
+            width={260}
+            height={60}
+            alt={siteName}
+            priority
+          />
+        </div>
       </Link>
-      {/* Search Section */}
-      <div className="w-full hidden lg:block max-w-2xl">
-        <SearchCompo />
+
+      {/* Center Search Input */}
+      <div className="w-full hidden md:block max-w-2xl mx-auto">
+        <Search />
       </div>
-      {/* Support Section & Theme Toggle */}
-      <div className="flex items-center gap-4 shrink-0">
+
+      {/* Support & Contact Chip + Theme Toggle */}
+      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        {/* Desktop Support Chip */}
         <div className="hidden lg:flex items-center gap-4">
-          <ThemeToggle compact={true} />
-          <div className="flex items-center gap-3 text-2xl text-primary">
-            <span>
+          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-muted/60 border border-border/80">
+            <span className="text-xl text-primary">
               <PiPhoneCallThin />
             </span>
-            <p className="flex flex-col text-nowrap text-sm text-foreground">
-              <span className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider">
-                Sales & Service
+            <div className="flex flex-col text-xs">
+              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                Support & Orders
               </span>
-              <span>
-                <a
-                  href="tel:01711-655686"
-                  className="font-bold hover:text-primary transition-colors"
-                >
-                  +8801711655686
-                </a>
-              </span>
-            </p>
+              <a
+                href={`tel:${rawPhone}`}
+                className="font-bold text-foreground hover:text-primary transition-colors tracking-tight"
+              >
+                {contactPhone}
+              </a>
+            </div>
           </div>
+
+          <ThemeToggle compact={true} />
         </div>
 
-        <div className="relative flex items-center gap-4 lg:hidden">
+        {/* Mobile Actions: Theme Toggle + Menu Drawer */}
+        <div className="flex items-center gap-2 lg:hidden">
           <ThemeToggle compact={true} />
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Search size={25} strokeWidth={1.75} />
-            </AlertDialogTrigger>
-            <AlertDialogContent className="w-[97%] top-32 bg-transparent border-none p-4 rounded-md block lg:hidden">
-              <SearchCompo />
-              <AlertDialogFooter>
-                <AlertDialogCancel className="absolute text-2xl -top-10 right-0 bg-transparent border-none text-white ">
-                  <X size={48} strokeWidth={2} />
-                </AlertDialogCancel>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          {/*  */}
+
           <Sheet>
             <SheetTrigger asChild>
-              <Menu variant="outline" />
+              <button
+                type="button"
+                aria-label="Open mobile navigation menu"
+                className="p-2 rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors flex items-center justify-center"
+              >
+                <MenuIcon className="w-5 h-5" />
+              </button>
             </SheetTrigger>
 
-            <SheetContent
-              side="left"
-              className="max-w-[370px] w-full px-0 pt-2 block lg:hidden overflow-scroll "
-            >
-              <div>
-                <Tabs className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 bg-transparent px-3 gap-3 z-[5000000000000]">
-                    <TabsTrigger
-                      className="w-full h-10 rounded-full text-deep-sea-blue font-bold bg-light-mist data-[state=active]:bg-sky-blue data-[state=active]:text-white leading-5 border-none z-10"
-                      value="menu"
-                    >
-                      Menu
-                    </TabsTrigger>
-                    <TabsTrigger
-                      className="w-full h-10 rounded-full text-deep-sea-blue font-bold bg-light-mist data-[state=active]:bg-sky-blue data-[state=active]:text-white leading-5 border-none z-10"
-                      value="shop"
-                    >
-                      Shop
-                    </TabsTrigger>
+            <SheetContent side="left" className="w-[320px] sm:w-[380px] p-0 flex flex-col bg-card">
+              <SheetHeader className="p-4 border-b border-border flex flex-row items-center justify-between">
+                <SheetTitle className="text-left font-bold text-base text-foreground">
+                  {siteName}
+                </SheetTitle>
+              </SheetHeader>
+
+              {/* Mobile Search inside drawer */}
+              <div className="p-4 pb-2 md:hidden">
+                <Search />
+              </div>
+
+              {/* Navigation Tabs (Menu / Categories) */}
+              <div className="flex-1 overflow-y-auto px-4 py-2">
+                <Tabs defaultValue="menu" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted">
+                    <TabsTrigger value="menu">Menu</TabsTrigger>
+                    <TabsTrigger value="categories">Categories</TabsTrigger>
                   </TabsList>
-                  {/* Menu */}
-                  <TabsContent value="menu">
-                    <div className="flex flex-col gap-4 mt-8 px-4">
-                      {menuData.map((navList, ind) => (
+
+                  <TabsContent value="menu" className="space-y-1">
+                    {headerMenus.map((item, idx) => (
+                      <SheetClose asChild key={idx}>
                         <Link
-                          className="capitalize text-deep-sea-blue text-[15px] font-semibold w-full"
-                          href={navList?.url}
-                          key={ind}
+                          href={item.url || "/"}
+                          className="flex items-center justify-between py-2.5 px-3 rounded-lg text-sm font-medium text-foreground hover:bg-muted hover:text-primary transition-colors"
                         >
-                          <SheetClose>{navList?.name}</SheetClose>
+                          <span>{item.name}</span>
                         </Link>
-                      ))}
-                    </div>
-                    <p className="border-t border-neutral-gray opacity-20 my-8" />
-                    <div className="flex flex-col items-center gap-4 px-4">
-                      <p className="w-full h-[48px] mx-auto flex items-center gap-2 px-2 text-[15px] font-semibold rounded-full justify-center bg-light-mist text-sky-blue capitalize">
-                        <PhoneCall size={18} strokeWidth={1.5} />
-                        Sales & service support
-                      </p>
-                      <p className="text-xs text-neutral-gray">
-                        Due to the COVID 19 epidemic, orders may be processed
-                        with a slight delay
-                      </p>
-                    </div>
+                      </SheetClose>
+                    ))}
                   </TabsContent>
-                  {/* Sop */}
-                  <TabsContent value="shop">
-                    <div className="flex flex-col gap-4 mt-8 px-4">
-                      {categoryData.map((category, ind) => (
-                        <Link
-                          className="capitalize text-deep-sea-blue text-[15px] font-semibold"
-                          href={`shop?categoryName=${category?.categoryName}`}
-                          key={ind}
-                        >
-                          <SheetClose>{category?.categoryName}</SheetClose>
-                        </Link>
-                      ))}
-                    </div>
+
+                  <TabsContent value="categories" className="space-y-1">
+                    {categories.length > 0 ? (
+                      categories.map((cat, idx) => (
+                        <SheetClose asChild key={idx}>
+                          <Link
+                            href={`/shop?category=${encodeURIComponent(cat.slug || cat.categoryName)}`}
+                            className="flex items-center justify-between py-2 px-3 rounded-lg text-sm text-foreground hover:bg-muted hover:text-primary transition-colors"
+                          >
+                            <span>{cat.categoryName}</span>
+                          </Link>
+                        </SheetClose>
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground p-3">No categories loaded</p>
+                    )}
                   </TabsContent>
                 </Tabs>
+              </div>
+
+              {/* Mobile Drawer Footer: Phone support */}
+              <div className="p-4 border-t border-border bg-muted/30">
+                <a
+                  href={`tel:${rawPhone}`}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-95 transition-opacity"
+                >
+                  <PhoneCall size={16} />
+                  <span>Call {contactPhone}</span>
+                </a>
               </div>
             </SheetContent>
           </Sheet>
@@ -159,5 +163,3 @@ async function SearchAndSupport({ menuData }) {
     </section>
   );
 }
-
-export default SearchAndSupport;

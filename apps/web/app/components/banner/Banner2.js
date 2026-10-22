@@ -1,49 +1,39 @@
 import Image from "next/image";
 import Link from "next/link";
 
-async function Banner2() {
-  let bannerData = [];
-  try {
-    const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    const response = await fetch(`${apiUrl}/api/banner`);
-    if (response.ok) {
-      const data = await response.json();
-      bannerData = (data?.banner ?? []).slice(3, 5);
-    }
-  } catch (err) {
-    console.error("Failed to fetch banners:", err);
-  }
+export default function Banner2({ banners = [] }) {
+  // Use banners marked as home-grid-2 or slice 3..5
+  const bannerGrid = banners.filter((b) => b.group === "home-grid-2");
+  const items = bannerGrid.length > 0 ? bannerGrid : banners.slice(3, 5);
 
-  if (!bannerData.length) return null;
+  if (!items || items.length === 0) return null;
 
   return (
-    <section className="relative container mx-auto px-3 lg:px-6">
-      {bannerData.length > 0 && (
-        <div className="w-full h-full grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {bannerData.map((banner, ind) => {
-            const prodId = banner?.productId?._id || banner?.productId || "";
-            return (
-              <Link
-                href={prodId ? `/product/${prodId}` : "/shop"}
-                key={banner?._id || ind}
-                className={`${
-                  ind === 0 ? "xl:col-span-2" : ""
-                } w-full max-h-96 overflow-hidden rounded-lg`}
-              >
-                <Image
-                  className="w-full h-full object-cover transition-all duration-300"
-                  src={banner?.image || "/assets/banner/banner2.jpg"}
-                  width={400}
-                  height={400}
-                  alt={banner?.title || "Banner"}
-                />
-              </Link>
-            );
-          })}
-        </div>
-      )}
+    <section className="container mx-auto px-3 lg:px-6">
+      <div className={`grid grid-cols-1 ${items.length > 1 ? "md:grid-cols-2" : "grid-cols-1"} gap-4`}>
+        {items.map((banner, ind) => {
+          const prod = banner?.productId;
+          const targetUrl = prod
+            ? `/product/${prod.slug || prod._id || prod.id || prod}`
+            : banner?.link || "/shop";
+
+          return (
+            <Link
+              key={banner?._id || ind}
+              href={targetUrl}
+              className="relative w-full aspect-[21/9] sm:aspect-[16/7] overflow-hidden rounded-2xl border border-border shadow-sm group bg-muted/20"
+            >
+              <Image
+                src={banner?.image || "/assets/banner/01.jpg"}
+                alt={banner?.title || `Banner ${ind + 1}`}
+                fill
+                sizes="(max-width: 768px) 100vw, 600px"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            </Link>
+          );
+        })}
+      </div>
     </section>
   );
 }
-
-export default Banner2;

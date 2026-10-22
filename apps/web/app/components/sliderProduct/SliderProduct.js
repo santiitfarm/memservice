@@ -1,79 +1,68 @@
 "use client";
-// import lucide icons
+
 import { ChevronLeft, ChevronRight } from "lucide-react";
-// Import Swiper React components
 import { Autoplay, Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
-// Import Swiper styles
 import "swiper/css";
 import "swiper/css/pagination";
 import SliderProductCart from "./SliderProductCart";
 
 const customButtonStyles =
-  "static xl:absolute w-7 sm:w-9 h-7 sm:h-9 text-base xl:text-xl bg-sky-blue text-white flex items-center justify-center border-none xl:top-1/2 transform -translate-y-1/2 z-10 cursor-pointer rounded-full xl:opacity-0 visibility-hidden group-hover:opacity-100 group-hover:visible transition-all duration-300 shadow-lg";
-  
+  "static xl:absolute w-8 sm:w-10 h-8 sm:h-10 text-base xl:text-xl bg-primary text-primary-foreground flex items-center justify-center border-none xl:top-1/2 transform -translate-y-1/2 z-10 cursor-pointer rounded-full xl:opacity-0 visibility-hidden group-hover:opacity-100 group-hover:visible transition-all duration-300 shadow-md";
+
 export default function SliderProduct({ brandData = [] }) {
   if (!brandData.length) return null;
 
   return (
-    <main className="relative container mx-auto px-3 lg:px-6 group mb-12 xl:mb-0">
-      <h2 className="mb-6 text-2xl font-bold text-deep-sea-blue">
-        Shop by Brand
-      </h2>
-      {/* Custom Navigation Buttons */}
-      <div className="absolute xl:static -bottom-16 sm:-bottom-20  flex gap-6 left-1/2 xl:left-auto transform xl:transform-none -translate-x-1/2">
-        <div
-          className={`${customButtonStyles} custom-productSlider-button-prev xl:left-0 group-hover:opacity-1`}
-        >
-          <ChevronLeft strokeWidth={1.5} />
+    <section className="relative container mx-auto px-3 lg:px-6 group mb-10 xl:mb-0">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+            Shop by Brand
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Top genuine healthcare and pharmaceutical manufacturers
+          </p>
         </div>
-        <div
-          className={`${customButtonStyles} custom-productSlider-button-next  xl:right-0 group-hover:opacity-1`}
-        >
-          <ChevronRight strokeWidth={1.5} />
+
+        {/* Custom Navigation Buttons */}
+        <div className="flex gap-2">
+          <div className={`${customButtonStyles} custom-productSlider-button-prev xl:left-0`}>
+            <ChevronLeft size={18} strokeWidth={2} />
+          </div>
+          <div className={`${customButtonStyles} custom-productSlider-button-next xl:right-0`}>
+            <ChevronRight size={18} strokeWidth={2} />
+          </div>
         </div>
       </div>
+
       <Swiper
         loop={brandData.length > 6}
         autoplay={{
-          delay: 5000,
+          delay: 4500,
           disableOnInteraction: false,
+          pauseOnMouseEnter: true,
         }}
         navigation={{
           nextEl: ".custom-productSlider-button-next",
           prevEl: ".custom-productSlider-button-prev",
         }}
         breakpoints={{
-          0: {
-            slidesPerView: 2,
-            spaceBetween: 10,
-          },
-          320: {
-            slidesPerView: 3,
-            spaceBetween: 10,
-          },
-          640: {
-            slidesPerView: 4,
-            spaceBetween: 20,
-          },
-          768: {
-            slidesPerView: 5,
-            spaceBetween: 25,
-          },
-          1024: {
-            slidesPerView: 6,
-            spaceBetween: 30,
-          },
+          0: { slidesPerView: 2, spaceBetween: 12 },
+          480: { slidesPerView: 3, spaceBetween: 14 },
+          640: { slidesPerView: 4, spaceBetween: 16 },
+          768: { slidesPerView: 5, spaceBetween: 20 },
+          1024: { slidesPerView: 6, spaceBetween: 24 },
         }}
-        modules={[Navigation, Autoplay]} // Fade effect removed
+        modules={[Navigation, Autoplay]}
         className="w-full h-full"
       >
         {brandData.map((data, ind) => (
-          <SwiperSlide key={ind}>
+          <SwiperSlide key={data?._id || ind}>
             <SliderProductCart cartData={data} />
           </SwiperSlide>
         ))}
       </Swiper>
-    </main>
+    </section>
   );
 }

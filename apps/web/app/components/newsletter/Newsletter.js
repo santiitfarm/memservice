@@ -1,74 +1,78 @@
 "use client";
-// import react icon
+
 import { useState } from "react";
 import { BsSend } from "react-icons/bs";
+import { Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 
-function Newsletter() {
+export default function Newsletter() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (e) => {
+    if (e) e.preventDefault();
     const address = email.trim();
     if (!address) {
-      toast.error("Please enter your email address");
+      toast.error("Please enter a valid email address");
       return;
     }
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/newsletter`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: address }),
-        }
-      );
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      const response = await fetch(`${apiUrl}/api/newsletter`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: address }),
+      });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Submission failed");
 
       setEmail("");
-      toast.success("Thanks for Subscribing Mem Service!");
+      toast.success("Thank you for subscribing to the Mem Service newsletter!");
     } catch (error) {
       toast.error(error.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
   return (
-    <section className="container mx-auto px-4 md:px-6 flex gap-4 flex-col lg:flex-row items-start justify-between text-white p-8">
-      <div>
-        <h4 className="text-2xl font-bold leading-7">Join our newsletter</h4>
-        <p className="text-sm leading-6 mt-2">
-          Join over half a million vitamin lovers and get our latest deals,
-          articles, and resources!
+    <section className="container mx-auto px-4 md:px-6 py-10 sm:py-12 flex flex-col lg:flex-row items-center justify-between gap-6 text-white">
+      <div className="max-w-xl text-center lg:text-left">
+        <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">
+          Subscribe to our Healthcare Newsletter
+        </h3>
+        <p className="text-xs sm:text-sm text-white/90 mt-2 leading-relaxed">
+          Get exclusive discounts, new arrival alerts, and certified health tips delivered straight to your inbox.
         </p>
       </div>
-      <div className="relative w-full lg:w-10/12 xl:w-1/2 overflow-hidden">
+
+      <form onSubmit={handleSubscribe} className="relative w-full max-w-md">
         <input
-          className="relative w-full h-12 rounded-full px-5 bg-light-mist text-deep-sea-blue focus:outline-none"
+          className="w-full h-12 rounded-full pl-5 pr-32 bg-white text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-white/80 shadow-md text-xs sm:text-sm"
           type="email"
-          placeholder="Email address.."
-          name="EmailAddress"
+          placeholder="Enter your email address..."
+          name="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
-        <div className="w-32 sm:w-36 xl:w-48 h-full absolute top-0 right-0 rounded-r-full bg-sunset-orange transition-all duration-300 hover:bg-deep-sea-blue flex items-center justify-center cursor-pointer">
-          <button
-            className="flex items-center gap-3 text-sm sm:text-base font-medium sm:font-semibold"
-            onClick={handleSubscribe}
-            disabled={loading}
-          >
-            <span className="text-lg sm:text-xl">
+        <button
+          type="submit"
+          disabled={loading}
+          className="absolute top-1 right-1 bottom-1 px-4 sm:px-6 rounded-full bg-sunset-orange hover:bg-sunset-orange/90 text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-sm active:scale-95 disabled:opacity-70"
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
               <BsSend />
-            </span>
-            <span>Subscribe</span>
-          </button>
-        </div>
-      </div>
+              <span>Subscribe</span>
+            </>
+          )}
+        </button>
+      </form>
     </section>
   );
 }
-
-export default Newsletter;
