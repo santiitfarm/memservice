@@ -44,6 +44,15 @@ const rules = [
   { re: /^\/api\/reviews\/[^/]+$/, methods: ["PUT"], min: 1 },
   { re: /^\/api\/appointments$/, methods: ["GET"], min: 1 },
   { re: /^\/api\/appointments\/[^/]+$/, methods: ["PUT"], min: 1 },
+
+  // Staff Stock Management
+  { re: /^\/api\/stock(\/|$)/, methods: ANY, min: 1 },
+
+  // Staff Returns Management
+  { re: /^\/api\/returns\/[^/]+$/, methods: ["PUT"], min: 1 },
+
+  // Staff Privacy Data Requests Processing
+  { re: /^\/api\/me\/data-requests\/[^/]+$/, methods: ["PUT"], min: 1 },
 ];
 
 function allowedOrigins() {
@@ -86,6 +95,10 @@ export async function middleware(request) {
     pathname.startsWith("/api/couriers/") ||
     pathname === "/api/track" ||
     pathname === "/api/cart/price" ||
+    pathname === "/api/orders/track" ||
+    pathname === "/api/coupons/validate" ||
+    pathname === "/api/returns" ||
+    pathname.startsWith("/api/me/") ||
     pathname.startsWith("/api/appointments") ||
     pathname.startsWith("/api/reviews");
 

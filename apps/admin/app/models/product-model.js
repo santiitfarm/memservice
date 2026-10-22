@@ -40,6 +40,7 @@ const productsSchema = new mongoose.Schema(
     product_features: { type: Array },
     additional_info: { type: String },
     specificationsHtml: { type: String },
+    specificationsHtmlBangla: { type: String },
     special_tag: { type: String },
     tags: { type: Array, required: true },
     images: Array,
@@ -51,6 +52,34 @@ const productsSchema = new mongoose.Schema(
 
     stock: { type: Number, required: true },
     sold_out: { type: Number, default: 0 },
+    lowStockThreshold: { type: Number, default: 5 },
+    sku: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      index: true,
+    },
+    variants: [
+      {
+        sku: { type: String, sparse: true },
+        label: { type: String },
+        attributes: {
+          packSize: { type: String },
+          color: { type: String },
+          strength: { type: String },
+        },
+        regularPrice: { type: Number, default: 0 },
+        discountPrice: { type: Number, default: 0 },
+        stock: { type: Number, default: 0 },
+        image: { type: String },
+        status: {
+          type: String,
+          enum: ["active", "inactive"],
+          default: "active",
+        },
+      },
+    ],
     reviews: { type: Array },
   },
   {

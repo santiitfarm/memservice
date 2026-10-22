@@ -15,12 +15,21 @@ const pageSchema = new Schema(
       required: true,
       trim: true,
     },
+    titleBn: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     template: {
       type: String,
       enum: ["default", "about", "legal", "contact"],
       default: "default",
     },
     content: {
+      type: String,
+      default: "",
+    },
+    contentBn: {
       type: String,
       default: "",
     },
@@ -32,7 +41,9 @@ const pageSchema = new Schema(
     ],
     seo: {
       title: { type: String, default: "" },
+      titleBn: { type: String, default: "" },
       description: { type: String, default: "" },
+      descriptionBn: { type: String, default: "" },
       ogImage: { type: String, default: "" },
       noIndex: { type: Boolean, default: false },
     },

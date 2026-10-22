@@ -1,8 +1,11 @@
 import { Counter, getNextOrderNumber } from "@/app/models/Counter";
 import { CustomerProfile } from "@/app/models/customer-profile-model";
+import Coupon from "@/app/models/Coupon";
+import CouponRedemption from "@/app/models/CouponRedemption";
 import IdempotencyKey from "@/app/models/IdempotencyKey";
 import { Order } from "@/app/models/order-model";
 import Product from "@/app/models/product-model";
+import StockMovement from "@/app/models/StockMovement";
 import { SAFE_CUSTOMER_FIELDS } from "@/lib/customer";
 import { getPaymentAdapter } from "@/lib/integrations/payments";
 import { getIntegration } from "@/lib/integrations/resolver";
@@ -90,6 +93,7 @@ export async function POST(request) {
       area,
       paymentMethod,
       couponCode,
+      customer: body.customer || { phone_number: body.phone_number },
       allowOutOfStock: false,
     });
   } catch (priceErr) {
@@ -181,7 +185,10 @@ export async function POST(request) {
 
   try {
     await session.withTransaction(async () => {
-      // 5.1 Atomic inventory decrement with stock condition check
+      // 5.2 Server-side atomic order number generation
+      const serverOrderNumber = await getNextOrderNumber(session);
+
+      // 5.1 Atomic inventory decrement with stock condition check & StockMovement log
       for (const item of priced.items) {
         const updated = await Product.findOneAndUpdate(
           {
@@ -205,10 +212,23 @@ export async function POST(request) {
           err.code = "OUT_OF_STOCK";
           throw err;
         }
-      }
 
-      // 5.2 Server-side atomic order number generation
-      const serverOrderNumber = await getNextOrderNumber(session);
+        await StockMovement.create(
+          [
+            {
+              product: updated._id,
+              variantSku: item.variantSku || null,
+              delta: -item.quantity,
+              reason: "order",
+              reference: `Order #${serverOrderNumber}`,
+              balanceAfter: updated.stock,
+              by: null,
+              at: new Date(),
+            },
+          ],
+          { session }
+        );
+      }
 
       // 5.3 Customer profile lookup or auto-creation
       let customerId = body.customer;
@@ -246,6 +266,15 @@ export async function POST(request) {
           manufacturer: i.manufacturer,
         })),
         total_amount: priced.totalAmount,
+        discount: priced.discount || 0,
+        coupon: priced.coupon
+          ? {
+              code: priced.coupon.code,
+              type: priced.coupon.type,
+              value: priced.coupon.value,
+              discountAmount: priced.discount,
+            }
+          : null,
         shipping_details: {
           ...(body.shipping_details || {}),
           zoneKey: priced.deliveryQuote.zoneKey,
@@ -265,6 +294,30 @@ export async function POST(request) {
 
       const [newOrder] = await Order.create([orderDoc], { session });
       createdOrder = newOrder;
+
+      // 5.5 Atomic coupon redemption recording
+      if (priced.coupon?.couponId && priced.discount > 0) {
+        await Coupon.findByIdAndUpdate(
+          priced.coupon.couponId,
+          { $inc: { usedCount: 1 } },
+          { session }
+        );
+
+        await CouponRedemption.create(
+          [
+            {
+              coupon: priced.coupon.couponId,
+              code: priced.coupon.code,
+              order: newOrder._id,
+              customer: customerId || null,
+              phone: customerInput.phone_number || body.phone_number || null,
+              discountAmount: priced.discount,
+              redeemedAt: new Date(),
+            },
+          ],
+          { session }
+        );
+      }
 
       if (customerId) {
         await CustomerProfile.findByIdAndUpdate(
@@ -386,7 +439,7 @@ async function cancelAndRestockOrder(order) {
       );
       if (Array.isArray(order.items)) {
         for (const item of order.items) {
-          await Product.findByIdAndUpdate(
+          const updated = await Product.findByIdAndUpdate(
             item.id,
             {
               $inc: {
@@ -394,9 +447,38 @@ async function cancelAndRestockOrder(order) {
                 sold_out: -item.quantity,
               },
             },
-            { session }
+            { session, new: true }
           );
+
+          if (updated) {
+            await StockMovement.create(
+              [
+                {
+                  product: updated._id,
+                  variantSku: item.variantSku || null,
+                  delta: item.quantity,
+                  reason: "cancel",
+                  reference: `Order #${order.order_number} cancelled`,
+                  balanceAfter: updated.stock,
+                  by: null,
+                  at: new Date(),
+                },
+              ],
+              { session }
+            );
+          }
         }
+      }
+
+      // Revert coupon redemption if exists
+      const redemption = await CouponRedemption.findOne({ order: order._id }).session(session);
+      if (redemption) {
+        await Coupon.findByIdAndUpdate(
+          redemption.coupon,
+          { $inc: { usedCount: -1 } },
+          { session }
+        );
+        await CouponRedemption.deleteOne({ _id: redemption._id }).session(session);
       }
     });
   } catch (err) {

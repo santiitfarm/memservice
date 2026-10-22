@@ -1,9 +1,10 @@
 import Product from "@/app/models/product-model";
+import StockMovement from "@/app/models/StockMovement";
 import { sendMail } from "@/lib/mailer";
 
 /** Cancels an order: returns the stock, saves the new status and notifies the customer. */
 export async function cancelOrder(order, payment_info) {
-  await restockItems(order.items);
+  await restockItems(order.items, order.order_number);
 
   order.status = "cancelled";
   if (payment_info) {
@@ -15,7 +16,7 @@ export async function cancelOrder(order, payment_info) {
   return order;
 }
 
-async function restockItems(items) {
+async function restockItems(items, orderNumber = "") {
   for (const item of items) {
     if (!item.id || !item.quantity) {
       throw new Error("Invalid product details in order");
@@ -27,6 +28,17 @@ async function restockItems(items) {
     product.stock += item.quantity;
     product.sold_out -= item.quantity;
     await product.save();
+
+    await StockMovement.create({
+      product: product._id,
+      variantSku: item.variantSku || null,
+      delta: item.quantity,
+      reason: "cancel",
+      reference: orderNumber ? `Order #${orderNumber} cancelled` : "Order cancelled",
+      balanceAfter: product.stock,
+      by: null,
+      at: new Date(),
+    });
   }
 }
 

@@ -7,6 +7,10 @@ const categorySchema = new Schema(
       type: String,
       required: true,
     },
+    categoryNameBn: {
+      type: String,
+      default: "",
+    },
     categoryImg: {
       type: String,
     },
@@ -17,6 +21,10 @@ const categorySchema = new Schema(
       index: true,
     },
     description: {
+      type: String,
+      default: "",
+    },
+    descriptionBn: {
       type: String,
       default: "",
     },

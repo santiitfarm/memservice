@@ -3,6 +3,7 @@ import { calculateDeliveryQuote } from "./delivery.js";
 import { add, mul, sum, toMoney } from "./money.js";
 import connectMongo from "../services/mongo.js";
 import mongoose from "mongoose";
+import { evaluateCoupon } from "./coupons.js";
 
 /**
  * Authoritative server-side pricing engine.
@@ -169,13 +170,60 @@ export async function priceOrder({
   });
 
   const deliveryCharge = toMoney(deliveryQuote.charge);
-  const discount = 0; // Reserved for coupon promotion engine
-  const totalAmount = toMoney(add(subtotal, deliveryCharge) - discount);
+
+  let discount = 0;
+  let couponDetails = null;
+
+  if (couponCode) {
+    const customerId =
+      customer?._id ||
+      customer?.id ||
+      (typeof customer === "string" ? customer : null);
+    const phone = customer?.phone || customer?.phone_number;
+
+    const couponEval = await evaluateCoupon({
+      couponCode,
+      items: repricedItems,
+      subtotal,
+      deliveryCharge,
+      customerId,
+      phone,
+      session,
+    });
+
+    if (couponEval.valid) {
+      discount = couponEval.discount;
+      couponDetails = {
+        code: couponEval.code,
+        type: couponEval.type,
+        value: couponEval.value,
+        discountAmount: couponEval.discount,
+        couponId: couponEval.coupon?._id,
+      };
+    } else if (couponEval.error) {
+      if (!allowOutOfStock) {
+        const err = new Error(couponEval.error);
+        err.code = "INVALID_COUPON";
+        throw err;
+      }
+      couponDetails = {
+        code: couponCode,
+        valid: false,
+        error: couponEval.error,
+        discountAmount: 0,
+      };
+    }
+  }
+
+  const totalAmount = toMoney(
+    Math.max(0, add(subtotal, deliveryCharge) - discount)
+  );
 
   return {
     items: repricedItems,
     subtotal,
     discount,
+    coupon: couponDetails,
     deliveryCharge,
     totalAmount,
     deliveryQuote,

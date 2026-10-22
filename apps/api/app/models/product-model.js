@@ -52,6 +52,34 @@ const productsSchema = new mongoose.Schema(
 
     stock: { type: Number, required: false, default: 0 },
     sold_out: { type: Number, default: 0 },
+    lowStockThreshold: { type: Number, default: 5 },
+    sku: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      index: true,
+    },
+    variants: [
+      {
+        sku: { type: String, sparse: true },
+        label: { type: String },
+        attributes: {
+          packSize: { type: String },
+          color: { type: String },
+          strength: { type: String },
+        },
+        regularPrice: { type: Number, default: 0 },
+        discountPrice: { type: Number, default: 0 },
+        stock: { type: Number, default: 0 },
+        image: { type: String },
+        status: {
+          type: String,
+          enum: ["active", "inactive"],
+          default: "active",
+        },
+      },
+    ],
     avgRating: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0 },
     reviews: { type: Array },

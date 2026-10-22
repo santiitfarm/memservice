@@ -4,8 +4,10 @@ import mongoose, { Schema } from "mongoose";
 const brandSchema = new Schema(
   {
     title: { type: String, required: true, unique: true },
+    titleBn: { type: String, default: "" },
     slug: { type: String, trim: true, lowercase: true, index: true },
     description: { type: String, default: "" },
+    descriptionBn: { type: String, default: "" },
     logo: String,
     order: { type: Number, default: 0, index: true },
     featured: { type: Boolean, default: false, index: true },

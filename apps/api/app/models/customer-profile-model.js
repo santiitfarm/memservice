@@ -15,6 +15,7 @@ const customerProfileSchema = new Schema(
     address: { type: String },
     password: { type: String },
     orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
+    wishlist: [{ type: Schema.Types.ObjectId, ref: "Product" }],
     others: { type: String },
     passwordResetToken: { type: String },
     passwordResetExpires: { type: Date },

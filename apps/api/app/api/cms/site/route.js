@@ -3,7 +3,7 @@ import connectMongo from "@/services/mongo";
 import SiteSettings from "@/app/models/SiteSettings";
 import { revalidateStorefront } from "@/lib/revalidate";
 
-export async function GET() {
+export async function GET(request) {
   try {
     await connectMongo();
     let site = await SiteSettings.findOne({ key: "site" }).lean();
@@ -12,8 +12,50 @@ export async function GET() {
       site = await SiteSettings.create({ key: "site" });
     }
 
+    const { getLocale, resolveLocalized } = await import("@/lib/i18n");
+    const lang = getLocale(request);
+
+    const localizedSite = {
+      ...site,
+      tagline: resolveLocalized(site, "tagline", "taglineBn", lang),
+      contact: {
+        ...(site.contact || {}),
+        workingHours: resolveLocalized(
+          site.contact || {},
+          "workingHours",
+          "workingHoursBn",
+          lang
+        ),
+      },
+      header: {
+        ...(site.header || {}),
+        topBarText: resolveLocalized(
+          site.header || {},
+          "topBarText",
+          "topBarTextBn",
+          lang
+        ),
+      },
+      seo: {
+        ...(site.seo || {}),
+        defaultTitle: resolveLocalized(
+          site.seo || {},
+          "defaultTitle",
+          "defaultTitleBn",
+          lang
+        ),
+        defaultDescription: resolveLocalized(
+          site.seo || {},
+          "defaultDescription",
+          "defaultDescriptionBn",
+          lang
+        ),
+      },
+      _lang: lang,
+    };
+
     return NextResponse.json(
-      { success: true, site },
+      { success: true, site: localizedSite },
       {
         status: 200,
         headers: {

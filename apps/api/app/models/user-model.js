@@ -61,3 +61,6 @@ if (process.env.NODE_ENV !== "production" && mongoose.models.User) {
 }
 
 export const User = mongoose.models.User ?? mongoose.model("User", userSchema);
+
+export default User;
+

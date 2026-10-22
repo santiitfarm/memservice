@@ -17,6 +17,10 @@ const siteSettingsSchema = new Schema(
       type: String,
       default: "Genuine Medicines, Healthcare & Consultations Across Bangladesh",
     },
+    taglineBn: {
+      type: String,
+      default: "সারা বাংলাদেশে জেনুইন ওষুধ, স্বাস্থ্যসেবা ও ডাক্তার কনসালটেশন",
+    },
     logoLight: {
       type: String,
       default: "/assets/logo/logo.png",
@@ -39,6 +43,7 @@ const siteSettingsSchema = new Schema(
       },
       mapUrl: { type: String, default: "" },
       workingHours: { type: String, default: "9:00 AM - 10:00 PM (Daily)" },
+      workingHoursBn: { type: String, default: "সকাল ৯:০০ - রাত ১০:০০ (প্রতিদিন)" },
     },
     social: {
       facebook: { type: String, default: "https://facebook.com/memservice" },
@@ -53,11 +58,20 @@ const siteSettingsSchema = new Schema(
         type: String,
         default: "Mem Service - Healthcare, Medicines & Consultations in Bangladesh",
       },
+      defaultTitleBn: {
+        type: String,
+        default: "মেম সার্ভিস - বাংলাদেশে স্বাস্থ্যসেবা, ওষুধ ও বিশেষজ্ঞ ডাক্তার কনসালটেশন",
+      },
       titleTemplate: { type: String, default: "%s | Mem Service" },
       defaultDescription: {
         type: String,
         default:
           "Order genuine prescription medicines, OTC health products, and book verified specialist doctor consultations online across Bangladesh.",
+      },
+      defaultDescriptionBn: {
+        type: String,
+        default:
+          "অনলাইনে অর্ডার করুন আসল প্রেসক্রিপশন ও ওটিসি ওষুধ, স্বাস্থ্যপণ্য এবং বুক করুন ভেরিফাইড বিশেষজ্ঞ ডাক্তার কনসালটেশন।",
       },
       ogImage: { type: String, default: "/assets/logo/logo.png" },
     },
@@ -65,6 +79,10 @@ const siteSettingsSchema = new Schema(
       topBarText: {
         type: String,
         default: "Express delivery inside Dhaka within 24 hours | Call +8801711655686",
+      },
+      topBarTextBn: {
+        type: String,
+        default: "ঢাকায় ২৪ ঘণ্টায় এক্সপ্রেস ডেলিভারি | কল করুন +৮৮০১৭১১৬৫৫৬৮৬",
       },
       showSearch: { type: Boolean, default: true },
       showThemeToggle: { type: Boolean, default: true },

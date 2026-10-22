@@ -45,7 +45,15 @@ const orderSchema = new Schema(
     total_amount: { type: Number, required: true },
     status: {
       type: String,
-      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
+      enum: [
+        "pending",
+        "processing",
+        "shipped",
+        "delivered",
+        "cancelled",
+        "returned",
+        "partially_returned",
+      ],
       default: "pending",
     },
     shipping_details: {
@@ -64,7 +72,14 @@ const orderSchema = new Schema(
       provider: { type: String },
       status: {
         type: String,
-        enum: ["paid", "unpaid", "partially-paid", "pending"],
+        enum: [
+          "paid",
+          "unpaid",
+          "partially-paid",
+          "pending",
+          "refunded",
+          "partially-refunded",
+        ],
         default: "unpaid",
       },
       amount: { type: Number, required: true },

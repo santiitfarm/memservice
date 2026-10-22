@@ -23,8 +23,22 @@ export async function GET(request, context) {
       );
     }
 
+    const { getLocale, resolveLocalized } = await import("@/lib/i18n");
+    const lang = getLocale(request);
+    const localizedPage = {
+      ...page,
+      title: resolveLocalized(page, "title", "titleBn", lang),
+      content: resolveLocalized(page, "content", "contentBn", lang),
+      seo: {
+        ...(page.seo || {}),
+        title: resolveLocalized(page.seo || {}, "title", "titleBn", lang),
+        description: resolveLocalized(page.seo || {}, "description", "descriptionBn", lang),
+      },
+      _lang: lang,
+    };
+
     return NextResponse.json(
-      { success: true, page },
+      { success: true, page: localizedPage },
       {
         status: 200,
         headers: {
