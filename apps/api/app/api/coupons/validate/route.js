@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   // Rate-limit to 30 requests per minute per IP to prevent brute-forcing coupon codes
-  const limited = rateLimit(request, "coupons-validate", {
+  const limited = await rateLimit(request, "coupons-validate", {
     limit: 30,
     windowMs: 60 * 1000,
   });

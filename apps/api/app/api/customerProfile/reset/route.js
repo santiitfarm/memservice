@@ -7,7 +7,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
-  const limited = rateLimit(req, "customer-reset", {
+  const limited = await rateLimit(req, "customer-reset", {
     limit: 10,
     windowMs: 15 * 60_000,
   });

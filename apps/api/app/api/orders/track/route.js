@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   // 1. Rate-limit to 10 requests per minute per IP to prevent order harvesting
-  const limited = rateLimit(request, "orders-track", { limit: 10, windowMs: 60 * 1000 });
+  const limited = await rateLimit(request, "orders-track", { limit: 10, windowMs: 60 * 1000 });
   if (limited) return limited;
 
   await connectMongo();

@@ -7,7 +7,7 @@ const ANY = null;
 // Staff-only surface. `min` is the minimum role rank (manager=1, admin=2, super-admin=3).
 // Customer-owned resources (customerProfile/*) are checked inside their route handlers.
 const rules = [
-  { re: /^\/api\/user\/(profile|security)(\/|$)/, methods: ANY, min: 1 },
+  { re: /^\/api\/user\/(profile|security|sessions)(\/|$)/, methods: ANY, min: 1 },
   { re: /^\/api\/user(\/|$)/, methods: ANY, min: 2 },
   { re: /^\/api\/adminproduct(\/|$)/, methods: ANY, min: 1 },
   { re: /^\/api\/cloudinary(\/|$)/, methods: ANY, min: 1 },
@@ -98,6 +98,10 @@ export async function middleware(request) {
     return new NextResponse(null, { status: origin ? 204 : 403, headers: origin ? corsHeaders(origin) : {} });
   }
 
+  if (pathname === "/api/auth/session-check" || pathname.startsWith("/api/health/")) {
+    return NextResponse.next();
+  }
+
   const isExternalAllowed =
     pathname.startsWith("/api/pgw/") ||
     pathname.startsWith("/api/couriers/") ||
@@ -121,6 +125,23 @@ export async function middleware(request) {
     const staff = await getStaff(request);
     if (!staff) return withCors(unauthorized(), origin);
     if (rankOf(staff.role) < rule.min) return withCors(forbidden(), origin);
+
+    // Validate that session is not revoked if jti is present
+    if (staff.jti) {
+      try {
+        const checkUrl = new URL("/api/auth/session-check", request.url);
+        checkUrl.searchParams.set("jti", staff.jti);
+        const checkRes = await fetch(checkUrl.toString(), {
+          headers: { "x-internal-check": "true" },
+          cache: "no-store",
+        });
+        if (!checkRes.ok) {
+          return withCors(unauthorized("Session revoked or expired"), origin);
+        }
+      } catch (err) {
+        // Continue if internal sub-request fails temporarily
+      }
+    }
   }
 
   return withCors(NextResponse.next(), origin);

@@ -54,7 +54,7 @@ export async function GET(req) {
 
 // Public: self-registration.
 export async function POST(req) {
-  const limited = rateLimit(req, "customer-register", {
+  const limited = await rateLimit(req, "customer-register", {
     limit: 10,
     windowMs: 10 * 60_000,
   });
@@ -160,7 +160,7 @@ export async function PUT(req) {
     const access = await authorizeCustomerAccess(req, customerId);
     if (access.error) return access.error;
 
-    const limited = rateLimit(req, "customer-password", {
+    const limited = await rateLimit(req, "customer-password", {
       limit: 10,
       windowMs: 10 * 60_000,
     });

@@ -18,7 +18,7 @@ const layout = (title, body) => `<!DOCTYPE html>
 
 // Public: newsletter signup. The email content is built here, never taken from the client.
 export async function POST(request) {
-  const limited = rateLimit(request, "newsletter", { limit: 5, windowMs: 10 * 60_000 });
+  const limited = await rateLimit(request, "newsletter", { limit: 5, windowMs: 10 * 60_000 });
   if (limited) return limited;
 
   try {

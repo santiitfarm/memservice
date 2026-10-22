@@ -3,6 +3,13 @@ export function transformProductData(product) {
   const discountPrice = Number(product?.discount_price) || 0;
   const currentPrice = discountPrice > 0 ? discountPrice : regularPrice;
 
+  const brandName =
+    product?.brand?.title ||
+    (typeof product?.brand === "string" ? product.brand : "");
+  const categoryName =
+    product?.category?.categoryName ||
+    (typeof product?.category === "string" ? product.category : "");
+
   return {
     image: product?.images && product.images[0], // Use the first image
     name: product.model || product.name,
@@ -18,7 +25,7 @@ export function transformProductData(product) {
     filters: [
       {
         filterName: "category",
-        value: product?.category?.categoryName,
+        value: categoryName,
       },
       {
         filterName: "stock",
@@ -31,18 +38,18 @@ export function transformProductData(product) {
       },
       {
         filterName: "brand",
-        value: product?.brand?.title,
+        value: brandName,
       },
     ],
     url: `/product/${product._id}`,
     id: product._id,
-    brand: product?.brand.title,
+    brand: brandName,
     manufacturer_name: product?.manufacturer_name,
     product_type: product?.products_type,
     generic_name: product?.generic_name,
     special_tag: product?.special_tag,
     tags: product?.tags,
-    category: product?.category.categoryName,
+    category: categoryName,
     stock: product?.stock,
     is_new: product?.is_new,
     is_offer: product?.is_offer,

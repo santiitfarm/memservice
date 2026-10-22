@@ -21,3 +21,7 @@ pnpm-debug.log*
 # local docker data / dumps
 /.data
 /backups
+
+# test artifacts
+playwright-report
+test-results

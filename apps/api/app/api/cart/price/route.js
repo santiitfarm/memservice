@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request) {
   // Public rate-limited endpoint: max 60 calls per minute per IP
-  const limited = rateLimit(request, "cart-price", { limit: 60, windowMs: 60_000 });
+  const limited = await rateLimit(request, "cart-price", { limit: 60, windowMs: 60_000 });
   if (limited) return limited;
 
   try {

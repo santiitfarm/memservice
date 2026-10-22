@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 export async function POST(request, { params }) {
   await connectMongo();
 
-  const limited = rateLimit(request, "review-helpful", { limit: 30, windowMs: 60_000 });
+  const limited = await rateLimit(request, "review-helpful", { limit: 30, windowMs: 60_000 });
   if (limited) return limited;
 
   const { id } = await params;

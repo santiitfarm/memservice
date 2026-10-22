@@ -7,7 +7,7 @@ import { rateLimit } from "@/lib/rateLimit";
 import { verifyIdToken } from "@/lib/integrations/auth/google";
 
 export async function POST(request) {
-  const limited = rateLimit(request, "customer-oauth", {
+  const limited = await rateLimit(request, "customer-oauth", {
     limit: 15,
     windowMs: 5 * 60_000,
   });

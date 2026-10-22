@@ -13,7 +13,7 @@ import sanitizeHtml from "sanitize-html";
 export async function POST(request) {
   await connectMongo();
 
-  const limited = rateLimit(request, "customer-review", { limit: 10, windowMs: 60_000 });
+  const limited = await rateLimit(request, "customer-review", { limit: 10, windowMs: 60_000 });
   if (limited) return limited;
 
   const customerAuth = await getCustomer(request);

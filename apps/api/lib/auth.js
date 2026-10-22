@@ -33,12 +33,12 @@ async function verify(token, options) {
   }
 }
 
-/** Returns `{ id, email, name, role }` for a valid staff session cookie, otherwise null. */
+/** Returns `{ id, email, name, role, jti }` for a valid staff session cookie, otherwise null. */
 export async function getStaff(request) {
   const payload = await verify(request.cookies.get(STAFF_COOKIE)?.value);
   const user = payload?.user;
   if (!user?.id || rankOf(user.role) < 1) return null;
-  return user;
+  return { ...user, jti: payload.jti || null };
 }
 
 /** Returns `{ id, phone }` for a valid customer bearer token, otherwise null. */

@@ -69,7 +69,7 @@ function isDoctorAvailableOnDay(availableDayStr, date) {
 export async function POST(request) {
   await connectMongo();
 
-  const limited = rateLimit(request, "appointments", { limit: 10, windowMs: 60_000 });
+  const limited = await rateLimit(request, "appointments", { limit: 10, windowMs: 60_000 });
   if (limited) return limited;
 
   try {

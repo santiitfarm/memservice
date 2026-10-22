@@ -11,7 +11,7 @@ const generic = {
 };
 
 export async function POST(req) {
-  const limited = rateLimit(req, "customer-forgot", {
+  const limited = await rateLimit(req, "customer-forgot", {
     limit: 5,
     windowMs: 15 * 60_000,
   });

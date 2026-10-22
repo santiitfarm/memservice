@@ -6,7 +6,7 @@ import {
 } from "@/lib/integrations/tracking/meta";
 
 export async function POST(request) {
-  const limited = rateLimit(request, "public-tracking", {
+  const limited = await rateLimit(request, "public-tracking", {
     limit: 120,
     windowMs: 60 * 1000,
   });

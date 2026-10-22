@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 
 // Verifies customer credentials server-side so password hashes never leave the API.
 export async function POST(req) {
-  const limited = rateLimit(req, "customer-login", {
+  const limited = await rateLimit(req, "customer-login", {
     limit: 10,
     windowMs: 5 * 60_000,
   });
