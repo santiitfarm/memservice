@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { permanentRedirect } from "next/navigation";
 // import components
 import RelatedProducts from "@/app/components/relatedProducts/RelatedProducts";
 import DesInfoReviews from "../components/DesInfoReviews";
@@ -15,14 +16,14 @@ export async function generateMetadata({ params }, parent) {
   // optionally access and extend (rather than replace) parent metadata
   const previousImages = (await parent).openGraph?.images || [];
   return {
-    title: productData.name,
-    description: productData.short_description,
-    url: `${process.env.NEXT_PUBLIC_URL}/shop/${slug}`,
+    title: productData?.name || "Product",
+    description: productData?.short_description || "",
+    url: `${process.env.NEXT_PUBLIC_URL}/product/${data?.slug || slug}`,
     type: "product",
     openGraph: {
       images: [
         {
-          url: productData?.images?.[0] || defaultImage,
+          url: productData?.images?.[0] || "",
           width: 1200,
           height: 630,
           alt: productData?.name || "Product Image",
@@ -40,6 +41,12 @@ async function SingleProductPage({ params }) {
     `${process.env.API_URL}/api/shop/${slug}`
   );
   const data = await response.json();
+
+  // 301 Permanent Redirect if accessed by old MongoDB ObjectId and product has a slug
+  if (data?.isObjectId && data?.slug && data.slug !== slug) {
+    permanentRedirect(`/product/${data.slug}`);
+  }
+
   const productData = data?.product;
 
   const relatedProductResponse = await fetch(
@@ -78,6 +85,8 @@ async function SingleProductPage({ params }) {
             specificationsHtmlBangla={productData?.specificationsHtmlBangla}
             specificationsHtml={productData?.specificationsHtml}
             additionalInfo={additionalInfo}
+            productId={productData?._id}
+            slug={productData?.slug || slug}
           />
         </div>
         {/* Aside Banner */}

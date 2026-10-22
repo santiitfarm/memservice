@@ -9,6 +9,19 @@ const productsSchema = new mongoose.Schema(
     best_seller: { type: Boolean, default: false },
 
     name: { type: String, required: false },
+    slug: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      lowercase: true,
+      index: true,
+    },
+    slugHistory: {
+      type: [String],
+      default: [],
+    },
+
     manufacturer_name: { type: String, required: false },
     products_type: { type: String, required: false },
     generic_name: { type: String, required: false },
@@ -34,10 +47,13 @@ const productsSchema = new mongoose.Schema(
       type: String,
       enum: ["active", "inactive", "deleted"],
       default: "active",
+      index: true,
     },
 
-    stock: { type: Number, required: false },
+    stock: { type: Number, required: false, default: 0 },
     sold_out: { type: Number, default: 0 },
+    avgRating: { type: Number, default: 0, min: 0, max: 5 },
+    reviewCount: { type: Number, default: 0 },
     reviews: { type: Array },
   },
   {
@@ -45,10 +61,33 @@ const productsSchema = new mongoose.Schema(
   }
 );
 
-productsSchema.index({
-  name: "text",
-  createdAt: -1,
-});
+// Compound text index for catalog search
+productsSchema.index(
+  {
+    name: "text",
+    generic_name: "text",
+    manufacturer_name: "text",
+    tags: "text",
+    slug: "text",
+  },
+  {
+    weights: {
+      name: 10,
+      slug: 8,
+      generic_name: 6,
+      manufacturer_name: 4,
+      tags: 2,
+    },
+    name: "product_text_search",
+  }
+);
+
+// Filtering and sorting indexes
+productsSchema.index({ status: 1, createdAt: -1 });
+productsSchema.index({ status: 1, category: 1 });
+productsSchema.index({ status: 1, brand: 1 });
+productsSchema.index({ status: 1, discount_price: 1, regular_price: 1 });
+
 const Product =
   mongoose.models.Product || mongoose.model("Product", productsSchema);
 

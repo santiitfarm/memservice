@@ -11,6 +11,18 @@ const productsSchema = new mongoose.Schema(
     best_seller: { type: Boolean, default: false },
 
     name: { type: String, required: true },
+    slug: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      lowercase: true,
+      index: true,
+    },
+    slugHistory: {
+      type: [String],
+      default: [],
+    },
     manufacturer_name: { type: String, required: true },
     products_type: { type: String, required: true },
     generic_name: { type: String, required: true },

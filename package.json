@@ -20,6 +20,7 @@
     "db:logs": "docker compose logs -f mongo",
     "db:migrate": "node scripts/migrate-users-email-login.mjs",
     "db:migrate-money": "node scripts/migrate-money-to-number.mjs",
+    "db:migrate-product-slugs": "node scripts/migrate-product-slugs.mjs",
     "db:seed": "node scripts/seed.mjs",
     "db:pull-atlas": "node scripts/pull-atlas.mjs",
     "health": "node scripts/health.mjs",

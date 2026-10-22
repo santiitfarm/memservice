@@ -39,7 +39,11 @@ const rules = [
 
   // CMS Internal Staff-Only Listing Reads
   { re: /^\/api\/cms\/pages$/, methods: ["GET"], min: 1 },
-  { re: /^\/api\/cms\/menus$/, methods: ["GET"], min: 1 },
+  // Staff Reviews & Appointments Management
+  { re: /^\/api\/reviews$/, methods: ["GET"], min: 1 },
+  { re: /^\/api\/reviews\/[^/]+$/, methods: ["PUT"], min: 1 },
+  { re: /^\/api\/appointments$/, methods: ["GET"], min: 1 },
+  { re: /^\/api\/appointments\/[^/]+$/, methods: ["PUT"], min: 1 },
 ];
 
 function allowedOrigins() {
@@ -81,7 +85,9 @@ export async function middleware(request) {
     pathname.startsWith("/api/pgw/") ||
     pathname.startsWith("/api/couriers/") ||
     pathname === "/api/track" ||
-    pathname === "/api/cart/price";
+    pathname === "/api/cart/price" ||
+    pathname.startsWith("/api/appointments") ||
+    pathname.startsWith("/api/reviews");
 
   // Browser requests from an unknown site must never reach a state-changing handler,
   // except external payment/courier callbacks or public event tracking.

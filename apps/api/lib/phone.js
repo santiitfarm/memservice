@@ -1,25 +1,60 @@
 /**
- * Normalizes and validates Bangladeshi mobile phone numbers.
- * Converts "+88017...", "88017...", "017..." (with optional spaces/dashes) into 11-digit "01XXXXXXXXX".
- * Returns the 11-digit phone string if valid, or null if invalid.
- *
- * @param {string|number} raw
+ * Bangladesh phone number validation and normalization utilities.
+ */
+
+// Regex for valid Bangladesh mobile operators: 013, 014, 015, 016, 017, 018, 019
+const BD_PHONE_REGEX = /^(?:\+?880|880|0)?1[3-9]\d{8}$/;
+
+/**
+ * Validates whether an input string is a valid Bangladesh mobile number.
+ * Accepts formats: +8801XXXXXXXXX, 8801XXXXXXXXX, 01XXXXXXXXX.
+ * @param {string|number} phone
+ * @returns {boolean}
+ */
+export function isValidBDPhone(phone) {
+  if (!phone) return false;
+  const cleaned = String(phone).trim().replace(/[\s-]/g, "");
+  return BD_PHONE_REGEX.test(cleaned);
+}
+
+/**
+ * Normalizes a Bangladesh phone number to standard local 11-digit format: 01XXXXXXXXX.
+ * @param {string|number} phone
  * @returns {string|null}
  */
-export function normalizeBdPhone(raw) {
-  if (raw === undefined || raw === null) return null;
-  let digits = String(raw).replace(/\D/g, "");
+export function normalizeBDPhone(phone) {
+  if (!phone) return null;
+  const cleaned = String(phone).trim().replace(/[\s-]/g, "");
+  if (!BD_PHONE_REGEX.test(cleaned)) return null;
 
-  // If starts with 8801... (13 digits), strip country code 88
-  if (digits.startsWith("8801") && digits.length === 13) {
-    digits = digits.slice(2);
-  }
-
-  // Valid BD mobile number: starts with 01[3-9] and has exactly 11 digits
-  const BD_PHONE_REGEX = /^01[3-9]\d{8}$/;
-  if (BD_PHONE_REGEX.test(digits)) {
-    return digits;
-  }
-
-  return null;
+  // Extract last 10 digits and prefix with 0
+  const digits = cleaned.replace(/\D/g, "");
+  const last10 = digits.slice(-10);
+  return `0${last10}`;
 }
+
+/**
+ * Normalizes a Bangladesh phone number to E.164 international format: +8801XXXXXXXXX.
+ * @param {string|number} phone
+ * @returns {string|null}
+ */
+export function toE164BDPhone(phone) {
+  const local = normalizeBDPhone(phone);
+  if (!local) return null;
+  return `+88${local}`;
+}
+
+export const normalizeBdPhone = normalizeBDPhone;
+export const isValidBdPhone = isValidBDPhone;
+export const toE164BdPhone = toE164BDPhone;
+
+const phoneUtils = {
+  isValidBDPhone,
+  isValidBdPhone,
+  normalizeBDPhone,
+  normalizeBdPhone,
+  toE164BDPhone,
+  toE164BdPhone,
+};
+
+export default phoneUtils;
