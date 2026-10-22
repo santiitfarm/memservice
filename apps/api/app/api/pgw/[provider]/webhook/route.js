@@ -5,6 +5,7 @@ import WebhookEvent from "@/app/models/WebhookEvent";
 import { Order } from "@/app/models/order-model";
 import { getPaymentAdapter } from "@/lib/integrations/payments";
 import { sendOrderConfirmationEmail } from "@/lib/mailer";
+import { sendMetaPurchaseEvent } from "@/lib/integrations/tracking/meta";
 
 export async function POST(request, context) {
   await connectMongo();
@@ -99,6 +100,10 @@ export async function POST(request, context) {
 
         sendOrderConfirmationEmail(order).catch((err) =>
           console.error("Webhook order confirmation email failed:", err.message)
+        );
+
+        sendMetaPurchaseEvent(order, request).catch((err) =>
+          console.warn("[meta-capi] Webhook purchase event failed:", err.message)
         );
       }
     }

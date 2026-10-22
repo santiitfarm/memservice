@@ -1,16 +1,26 @@
 import mongoose, { Schema } from "mongoose";
 
-const customerProfileSchema = new Schema({
-  customer_name: { type: String, required: true },
-  phone_number: { type: String, required: true, unique: true },
-  email: { type: String },
-  address: { type: String },
-  password: { type: String },
-  orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
-  others: { type: String },
-  passwordResetToken: { type: String },
-  passwordResetExpires: { type: Date },
-});
+const customerProfileSchema = new Schema(
+  {
+    customer_name: { type: String, required: true },
+    phone_number: { type: String, sparse: true, index: true },
+    email: { type: String, sparse: true, index: true },
+    googleId: { type: String, sparse: true, index: true },
+    image: { type: String, default: "" },
+    authProvider: {
+      type: String,
+      enum: ["credentials", "google"],
+      default: "credentials",
+    },
+    address: { type: String },
+    password: { type: String },
+    orders: [{ type: Schema.Types.ObjectId, ref: "Order" }],
+    others: { type: String },
+    passwordResetToken: { type: String },
+    passwordResetExpires: { type: Date },
+  },
+  { timestamps: true }
+);
 
 customerProfileSchema.index({
   customer_name: "text",

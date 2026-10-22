@@ -79,6 +79,27 @@ const orderSchema = new Schema(
     requiresAttention: { type: Boolean, default: false },
     requiresRefund: { type: Boolean, default: false },
     paymentID: { type: String },
+    shipment: {
+      provider: { type: String },
+      consignmentId: { type: String },
+      trackingCode: { type: String },
+      trackingUrl: { type: String },
+      status: {
+        type: String,
+        enum: ["pending", "picked_up", "in_transit", "delivered", "returned", "cancelled"],
+        default: "pending",
+      },
+      fee: { type: Number, default: 0 },
+      bookedAt: { type: Date },
+      bookedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+      history: [
+        {
+          status: { type: String },
+          message: { type: String },
+          timestamp: { type: Date, default: Date.now },
+        },
+      ],
+    },
   },
   {
     timestamps: true,

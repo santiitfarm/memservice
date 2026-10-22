@@ -6,6 +6,7 @@ import { SAFE_CUSTOMER_FIELDS } from "@/lib/customer";
 import { cancelOrder } from "@/lib/orders";
 import { getPaymentAdapter } from "@/lib/integrations/payments";
 import { sendOrderConfirmationEmail } from "@/lib/mailer";
+import { sendMetaPurchaseEvent } from "@/lib/integrations/tracking/meta";
 
 async function parsePayload(request) {
   const method = request.method;
@@ -108,6 +109,11 @@ async function handleCallback(request, context) {
       // Trigger confirmation email asynchronously (does not block redirect)
       sendOrderConfirmationEmail(order).catch((err) =>
         console.error("Order confirmation email failed:", err.message)
+      );
+
+      // Trigger Meta Conversions API Purchase event asynchronously
+      sendMetaPurchaseEvent(order, request).catch((err) =>
+        console.warn("[meta-capi] Purchase event failed:", err.message)
       );
 
       const redirectUrl = new URL(`${appUrl}/complete-order`);

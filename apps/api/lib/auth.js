@@ -47,11 +47,14 @@ export async function getCustomer(request) {
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
   const payload = await verify(token, { audience: CUSTOMER_AUDIENCE });
   if (!payload?.sub) return null;
-  return { id: payload.sub, phone: payload.phone };
+  return { id: payload.sub, phone: payload.phone, email: payload.email };
 }
 
 export async function signCustomerToken(customer) {
-  return new SignJWT({ phone: customer.phone_number })
+  return new SignJWT({
+    phone: customer.phone_number || "",
+    email: customer.email || "",
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(String(customer._id))
     .setAudience(CUSTOMER_AUDIENCE)

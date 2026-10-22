@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectMongo from "@/services/mongo";
 import Integration from "@/app/models/Integration";
 import DeliveryZone from "@/app/models/DeliveryZone";
+import { listCourierAdapters } from "@/lib/integrations/couriers";
 
 export async function GET() {
   try {
@@ -15,27 +16,62 @@ export async function GET() {
         .lean(),
     ]);
 
-    // Safe flags map
     const enabledPaymentMethods = [];
-    let googleAuthEnabled = false;
-    let metaPixelId = null;
+    const enabledCouriers = [];
+    let googleAuthEnabled = Boolean(
+      process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID
+    );
+    let googleClientId =
+      process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID || "";
+    let metaPixelId = process.env.META_PIXEL_ID || null;
+    let metaTestMode = Boolean(process.env.META_TEST_EVENT_CODE);
+
+    const allCourierMetas = listCourierAdapters();
 
     for (const item of integrations) {
       if (item.category === "payment") {
         enabledPaymentMethods.push({
           key: item.key,
           mode: item.mode,
-          name:
-            item.config?.displayName ||
-            item.key.toUpperCase(),
+          name: item.config?.displayName || item.key.toUpperCase(),
         });
       }
-      if (item.key === "google_oauth" || item.key === "google") {
-        googleAuthEnabled = true;
+
+      if (item.category === "courier") {
+        const found = allCourierMetas.find((c) => c.key === item.key);
+        enabledCouriers.push({
+          key: item.key,
+          name: item.config?.displayName || found?.name || item.key,
+          trackingUrlTemplate: found?.trackingUrlTemplate || "",
+        });
       }
-      if (item.key === "meta_pixel" || item.key === "facebook_pixel") {
-        metaPixelId = item.config?.pixelId || null;
+
+      if (
+        item.key === "google_oauth" ||
+        item.key === "google-auth" ||
+        item.key === "google"
+      ) {
+        googleAuthEnabled = item.enabled;
+        googleClientId = item.config?.clientId || googleClientId;
       }
+
+      if (
+        item.key === "meta_capi" ||
+        item.key === "meta_pixel" ||
+        item.key === "meta"
+      ) {
+        metaPixelId = item.config?.pixelId || metaPixelId;
+        if (item.config?.testEventCode) metaTestMode = true;
+      }
+    }
+
+    // Fallback: If no couriers in DB, check env for steadfast or default
+    if (enabledCouriers.length === 0) {
+      enabledCouriers.push({
+        key: "steadfast",
+        name: "Steadfast Courier",
+        trackingUrlTemplate: "https://steadfast.com.bd/t/{code}",
+      });
     }
 
     // Always include COD by default unless delivery zones forbid it
@@ -53,6 +89,15 @@ export async function GET() {
         config: {
           paymentMethods: enabledPaymentMethods,
           deliveryZones: activeZones,
+          couriers: enabledCouriers,
+          googleAuth: {
+            enabled: googleAuthEnabled,
+            clientId: googleClientId,
+          },
+          tracking: {
+            metaPixelId,
+            testMode: metaTestMode,
+          },
           googleAuthEnabled,
           metaPixelId,
         },

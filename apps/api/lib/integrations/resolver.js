@@ -195,6 +195,198 @@ function getEnvFallback(key) {
       };
     }
 
+    case "pathao": {
+      const clientId = process.env.PATHAO_CLIENT_ID;
+      const clientSecret = process.env.PATHAO_CLIENT_SECRET;
+      const username = process.env.PATHAO_USERNAME;
+      const password = process.env.PATHAO_PASSWORD;
+      const storeId = process.env.PATHAO_STORE_ID;
+      const baseUrl =
+        process.env.PATHAO_BASE_URL ||
+        "https://courier-api-sandbox.pathao.net";
+
+      return {
+        key: "pathao",
+        category: "courier",
+        enabled: Boolean(clientId && clientSecret && username && password),
+        mode: baseUrl.includes("sandbox") ? "sandbox" : "live",
+        config: {
+          baseUrl,
+          clientId: clientId || "",
+          username: username || "",
+          storeId: storeId || "",
+          displayName: "Pathao Courier",
+        },
+        secrets: {
+          clientSecret: clientSecret || "",
+          password: password || "",
+        },
+      };
+    }
+
+    case "steadfast": {
+      const apiKey = process.env.STEADFAST_API_KEY;
+      const secretKey = process.env.STEADFAST_SECRET_KEY;
+      const baseUrl =
+        process.env.STEADFAST_BASE_URL ||
+        "https://portal.steadfast.com.bd/api/v1";
+
+      return {
+        key: "steadfast",
+        category: "courier",
+        enabled: Boolean(apiKey && secretKey),
+        mode: "live",
+        config: {
+          baseUrl,
+          displayName: "Steadfast Courier",
+        },
+        secrets: {
+          apiKey: apiKey || "",
+          secretKey: secretKey || "",
+        },
+      };
+    }
+
+    case "redx": {
+      const accessToken = process.env.REDX_ACCESS_TOKEN;
+      const baseUrl =
+        process.env.REDX_BASE_URL ||
+        "https://openapi.redx.com.bd/v1.0.0-beta";
+
+      return {
+        key: "redx",
+        category: "courier",
+        enabled: Boolean(accessToken),
+        mode: baseUrl.includes("sandbox") ? "sandbox" : "live",
+        config: {
+          baseUrl,
+          displayName: "RedX Delivery",
+        },
+        secrets: {
+          accessToken: accessToken || "",
+        },
+      };
+    }
+
+    case "paperfly": {
+      const username = process.env.PAPERFLY_USERNAME;
+      const password = process.env.PAPERFLY_PASSWORD;
+      const paperflyKey = process.env.PAPERFLY_KEY;
+      const baseUrl =
+        process.env.PAPERFLY_BASE_URL ||
+        "https://api.paperfly.com.bd";
+
+      return {
+        key: "paperfly",
+        category: "courier",
+        enabled: Boolean(username && password && paperflyKey),
+        mode: baseUrl.includes("sandbox") ? "sandbox" : "live",
+        config: {
+          baseUrl,
+          username: username || "",
+          displayName: "Paperfly Logistics",
+        },
+        secrets: {
+          password: password || "",
+          paperflyKey: paperflyKey || "",
+        },
+      };
+    }
+
+    case "ecourier": {
+      const apiKey = process.env.ECOURIER_API_KEY;
+      const apiSecret = process.env.ECOURIER_API_SECRET;
+      const userId = process.env.ECOURIER_USER_ID;
+      const baseUrl =
+        process.env.ECOURIER_BASE_URL ||
+        "https://backoffice.ecourier.com.bd/api";
+
+      return {
+        key: "ecourier",
+        category: "courier",
+        enabled: Boolean(apiKey && apiSecret && userId),
+        mode: baseUrl.includes("sandbox") ? "sandbox" : "live",
+        config: {
+          baseUrl,
+          userId: userId || "",
+          displayName: "eCourier",
+        },
+        secrets: {
+          apiKey: apiKey || "",
+          apiSecret: apiSecret || "",
+        },
+      };
+    }
+
+    case "cloudinary": {
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+      const apiKey = process.env.CLOUDINARY_API_KEY;
+      const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+      return {
+        key: "cloudinary",
+        category: "media",
+        enabled: Boolean(cloudName && apiKey && apiSecret),
+        mode: "live",
+        config: {
+          cloudName: cloudName || "",
+          displayName: "Cloudinary Media",
+        },
+        secrets: {
+          apiKey: apiKey || "",
+          apiSecret: apiSecret || "",
+        },
+      };
+    }
+
+    case "google_oauth":
+    case "google-auth":
+    case "google": {
+      const clientId =
+        process.env.AUTH_GOOGLE_ID ||
+        process.env.GOOGLE_CLIENT_ID;
+      const clientSecret =
+        process.env.AUTH_GOOGLE_SECRET ||
+        process.env.GOOGLE_CLIENT_SECRET;
+
+      return {
+        key: "google_oauth",
+        category: "auth",
+        enabled: Boolean(clientId),
+        mode: "live",
+        config: {
+          clientId: clientId || "",
+          displayName: "Google OAuth",
+        },
+        secrets: {
+          clientSecret: clientSecret || "",
+        },
+      };
+    }
+
+    case "meta_capi":
+    case "meta-capi":
+    case "meta": {
+      const pixelId = process.env.META_PIXEL_ID;
+      const accessToken = process.env.META_ACCESS_TOKEN;
+      const testEventCode = process.env.META_TEST_EVENT_CODE;
+
+      return {
+        key: "meta_capi",
+        category: "tracking",
+        enabled: Boolean(pixelId && accessToken),
+        mode: testEventCode ? "test" : "live",
+        config: {
+          pixelId: pixelId || "",
+          testEventCode: testEventCode || "",
+          displayName: "Meta Conversions API (CAPI)",
+        },
+        secrets: {
+          accessToken: accessToken || "",
+        },
+      };
+    }
+
     default:
       return null;
   }
