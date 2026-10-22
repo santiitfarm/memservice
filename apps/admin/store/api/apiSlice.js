@@ -27,6 +27,7 @@ export const apiSlice = createApi({
     "brand",
     "doctors",
     "doccategories",
+    "analytics",
   ],
 
   endpoints: (builder) => ({}),

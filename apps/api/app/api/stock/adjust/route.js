@@ -32,7 +32,7 @@ export async function POST(request) {
       );
     }
 
-    const validReasons = ["adjustment", "restock", "order", "cancel", "return"];
+    const validReasons = ["adjustment", "restock", "damaged", "order", "cancel", "return"];
     if (!validReasons.includes(reason)) {
       return NextResponse.json(
         {

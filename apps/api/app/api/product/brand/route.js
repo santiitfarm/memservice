@@ -196,9 +196,34 @@ export async function PUT(req) {
 export async function DELETE(req) {
   try {
     await dbConnect();
-    const { brandId } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const brandId = body.brandId || body.id;
+    if (!brandId) {
+      return NextResponse.json(
+        { message: "Brand ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const productCount = await Product.countDocuments({
+      brand: brandId,
+      status: { $ne: "deleted" },
+    });
+
+    if (productCount > 0) {
+      return NextResponse.json(
+        {
+          message: `Cannot delete brand. ${productCount} products are currently linked to this brand.`,
+        },
+        { status: 400 }
+      );
+    }
+
     const brand = await Brand.findOneAndDelete({ _id: brandId });
-    return NextResponse.json({ brand }, { status: 200 });
+    return NextResponse.json(
+      { success: true, message: "Brand deleted successfully", brand },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

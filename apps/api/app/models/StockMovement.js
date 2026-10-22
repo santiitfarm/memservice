@@ -19,7 +19,7 @@ const stockMovementSchema = new Schema(
     },
     reason: {
       type: String,
-      enum: ["order", "cancel", "return", "adjustment", "restock"],
+      enum: ["order", "cancel", "return", "adjustment", "restock", "damaged"],
       required: true,
       index: true,
     },

@@ -7,6 +7,7 @@ import Image from "next/image";
 import {
   LayoutDashboard,
   Package,
+  Boxes,
   FolderTree,
   Tag,
   ImageIcon,
@@ -48,6 +49,11 @@ export default function NavSideBar({ setIsCollapsed, isCollapsed, isSmall }) {
           href: "/dashboard/products",
           icon: Package,
           label: "Products",
+        },
+        {
+          href: "/dashboard/inventory",
+          icon: Boxes,
+          label: "Inventory",
         },
         {
           href: "/dashboard/category",

@@ -10,6 +10,8 @@ import ImageUpload from "./ImageUpload";
 import CodeEditor from "./RichTextEditor";
 import { useFetchCategoriesQuery } from "@/store/slices/CategoryApi";
 import AutoFillProductForm from "./AutoFillForm";
+import VariantsEditor from "../../components/VariantsEditor";
+import { useState } from "react";
 
 export default function AddProductForm() {
   const {
@@ -22,7 +24,7 @@ export default function AddProductForm() {
   } = useForm();
   const { data } = useFetchBrandsQuery();
   const { data: categories } = useFetchCategoriesQuery();
-  //console.log(data);
+  const [variants, setVariants] = useState([]);
   const [addProduct, { isLoading, isError, isSuccess }] =
     useAddProductMutation();
   const router = useRouter();
@@ -31,12 +33,13 @@ export default function AddProductForm() {
   const onSubmit = async (data) => {
     addProduct({
       ...data,
+      variants,
       color: data?.color?.split(","),
       tags: data?.tags?.split(","),
       pack_size: data?.pack_size?.split(","),
-      product_features: data.product_features.split("\n"),
-      specificationsHtml: codeRef.current.getContent(),
-      specificationsHtmlBangla: codeRefBangla.current.getContent(),
+      product_features: data.product_features?.split("\n") || [],
+      specificationsHtml: codeRef.current?.getContent() || "",
+      specificationsHtmlBangla: codeRefBangla.current?.getContent() || "",
     });
   };
   useEffect(() => {
@@ -476,6 +479,49 @@ export default function AddProductForm() {
           )}
         />
       </div>
+
+      <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 border border-border rounded-lg">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Product Name (Bangla)
+          </label>
+          <input
+            {...register("nameBn")}
+            type="text"
+            placeholder="যেমন: প্যারাসিটামল ৫০০ মি.গ্রা."
+            className="mt-1 block w-full border border-gray-300 dark:text-gray-200 placeholder:dark:text-gray-500 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Short Description (Bangla)
+          </label>
+          <input
+            {...register("short_descriptionBn")}
+            type="text"
+            placeholder="বাংলায় সংক্ষিপ্ত বিবরণ..."
+            className="mt-1 block w-full border border-gray-300 dark:text-gray-200 placeholder:dark:text-gray-500 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="col-span-3 p-4 bg-card border border-border rounded-lg">
+        <VariantsEditor
+          variants={variants}
+          onChange={(newVars) => {
+            setVariants(newVars);
+            if (newVars.length > 0) {
+              const totalStock = newVars.reduce(
+                (s, v) => s + (Number(v.stock) || 0),
+                0
+              );
+              setValue("stock", totalStock);
+            }
+          }}
+        />
+      </div>
+
       <div className="flex gap-4 col-span-3 justify-center items-center">
         <button
           type="submit"

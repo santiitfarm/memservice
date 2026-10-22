@@ -27,6 +27,24 @@ export const ordersApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["orders", "order"],
     }),
+
+    bookCourier: builder.mutation({
+      query: ({ orderId, ...body }) => ({
+        url: `/order/${orderId}/shipment`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["orders", "order"],
+    }),
+
+    verifyPayment: builder.mutation({
+      query: ({ orderId, payment_info }) => ({
+        url: `/order/${orderId}`,
+        method: "PUT",
+        body: { payment_info },
+      }),
+      invalidatesTags: ["orders", "order"],
+    }),
   }),
 });
 
@@ -35,4 +53,6 @@ export const {
   useFetchSingleOrdersQuery,
   useAddOrderMutation,
   useUpdateOrderMutation,
+  useBookCourierMutation,
+  useVerifyPaymentMutation,
 } = ordersApi;

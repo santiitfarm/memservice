@@ -22,6 +22,7 @@ import { Tag } from "lucide-react";
 import { Delete } from "lucide-react";
 import DeleteConfirmationModal from "../../banners/_components/DeleteModal";
 import ImageUpload from "../new/components/ImageUpload";
+import VariantsEditor from "../components/VariantsEditor";
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -323,8 +324,27 @@ export default function ProductDetailsPage() {
 
               {/* Continue with other fields similarly */}
               {renderField("Short Description", "short_description")}
+              {renderField("Product Name (Bangla)", "nameBn")}
+              {renderField("Short Description (Bangla)", "short_descriptionBn")}
               {renderField("additional_info", "additional_info")}
               {renderTextArea("product_features", "product_features")}
+
+              {/* Variants Section */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                <VariantsEditor
+                  variants={editedProduct?.variants || []}
+                  onChange={(newVariants) => {
+                    handleInputChange("variants", newVariants);
+                    if (newVariants.length > 0) {
+                      const totalVarStock = newVariants.reduce(
+                        (sum, v) => sum + (Number(v.stock) || 0),
+                        0
+                      );
+                      handleInputChange("stock", totalVarStock);
+                    }
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

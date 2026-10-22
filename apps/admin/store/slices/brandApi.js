@@ -27,6 +27,15 @@ export const brandsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["brands"],
     }),
+
+    deleteBrand: builder.mutation({
+      query: (brandId) => ({
+        url: `/product/brand`,
+        method: "DELETE",
+        body: { brandId },
+      }),
+      invalidatesTags: ["brands"],
+    }),
   }),
 });
 
@@ -34,5 +43,7 @@ export const {
   useAddBrandMutation,
   useFetchBrandsQuery,
   useUpdateBrandMutation,
+  useDeleteBrandMutation,
   useFetchBrandsByCategoryQuery,
 } = brandsApi;
+

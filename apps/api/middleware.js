@@ -53,6 +53,9 @@ const rules = [
 
   // Staff Privacy Data Requests Processing
   { re: /^\/api\/me\/data-requests\/[^/]+$/, methods: ["PUT"], min: 1 },
+
+  // Staff Analytics
+  { re: /^\/api\/analytics(\/|$)/, methods: ANY, min: 1 },
 ];
 
 function allowedOrigins() {

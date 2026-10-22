@@ -4,8 +4,11 @@ import connectMongo from "@/services/mongo";
 export async function POST(req) {
   await connectMongo();
   const body = await req.json();
-  console.log(body);
   try {
+    if (!body.slug && body.name) {
+      const { generateUniqueSlug } = await import("@/lib/slug");
+      body.slug = await generateUniqueSlug(Product, body.name);
+    }
     const product = await Product.create(body);
     return new Response(JSON.stringify({ success: true, product: product }), {
       status: 200,
@@ -30,8 +33,11 @@ export async function POST(req) {
 export async function PUT(req) {
   await connectMongo();
   const body = await req.json();
-  console.log(body);
   try {
+    if (body.name && !body.slug) {
+      const { generateUniqueSlug } = await import("@/lib/slug");
+      body.slug = await generateUniqueSlug(Product, body.name, body._id);
+    }
     const product = await Product.findByIdAndUpdate(body._id, body, {
       new: true,
     });
