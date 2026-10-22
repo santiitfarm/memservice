@@ -4,6 +4,7 @@ import "./globals.css";
 import Footer from "@/app/components/footer/Footer";
 import NavigationBar from "@/app/components/navigationBar/NavigationBar";
 import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { CartProvider } from "./context/cartContext";
 import { WishlistProvider } from "./context/wishlistContext";
 import { SessionProvider } from "next-auth/react";
@@ -26,8 +27,27 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('theme');
+                  var isDark = theme === 'dark' || ((!theme || theme === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className={`${geistSans.variable} min-h-screen bg-background text-foreground antialiased`}>
         <Suspense>
           <SessionProvider>
             <CartProvider>
@@ -40,7 +60,7 @@ export default function RootLayout({ children }) {
           </SessionProvider>
           <ToastContainer
             position="top-center"
-            autoClose={3000} // 5 seconds
+            autoClose={3000}
             hideProgressBar={true}
             newestOnTop={false}
             closeOnClick

@@ -11,35 +11,42 @@ async function Category() {
   if (!categoryData.length) return null;
 
   return (
-    <section className="relative flex max-h-[475px] w-full flex-col overflow-hidden rounded-lg border border-light-mist bg-white shadow-sm">
-      <h2 className="border-b border-light-mist bg-light-mist/60 px-6 py-3 text-xs font-bold uppercase tracking-widest text-deep-sea-blue">
+    <section className="relative flex max-h-[475px] w-full flex-col rounded-lg border border-border bg-card shadow-sm">
+      <h2 className="border-b border-border bg-muted/40 px-6 py-3 text-xs font-bold uppercase tracking-widest text-foreground rounded-t-lg">
         Categories
       </h2>
       {/* Category Sidebar */}
-      <div className="overflow-y-auto">
+      <div className="overflow-y-visible">
         {categoryData.map((category, ind) => (
           <div key={ind} className="group relative">
             <Link
               href={`/shop?category=${encodeURIComponent(category?.categoryName)}`}
-              className="capitalize text-deep-sea-blue transition-all duration-300 hover:bg-light-mist/60 hover:text-sky-blue text-[15px] font-semibold block px-6 py-3 border-b border-light-mist last:border-b-0"
+              className="capitalize text-foreground transition-all duration-200 hover:bg-muted/60 hover:text-primary text-[14px] font-medium block px-6 py-2.5 border-b border-border last:border-b-0"
             >
               <p className="flex items-center justify-between">
-                {category?.categoryName}
-                {category?.subCategory && (
-                  <span className="transition-all duration-300 group-hover:translate-x-2">
-                    <ChevronRight size={16} strokeWidth={1.5} />
+                <span>{category?.categoryName}</span>
+                {category?.subCategory && category.subCategory.length > 0 && (
+                  <span className="transition-all duration-200 group-hover:translate-x-1 text-muted-foreground group-hover:text-primary">
+                    <ChevronRight size={15} strokeWidth={1.5} />
                   </span>
                 )}
               </p>
             </Link>
-            {/* Subcategories */}
-            {category?.subCategory && (
-              <div className="absolute z-50 top-0 left-full w-[600px] bg-white rounded-r-lg border border-light-mist shadow-xl hidden group-hover:block">
-                <div className="grid grid-cols-3 gap-3 p-4">
+            {/* Subcategories Flyout */}
+            {category?.subCategory && category.subCategory.length > 0 && (
+              <div className="absolute z-50 top-0 left-full ml-1 w-[480px] bg-card rounded-lg border border-border shadow-2xl hidden group-hover:block p-4">
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 pb-2 border-b border-border">
+                  {category?.categoryName} Subcategories
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
                   {category?.subCategory.map((subCategory, subInd) => (
-                    <div key={subInd} className="text-gray-700 hover:text-sky-blue">
-                      <p className="text-sm font-medium">{subCategory?.name}</p>
-                    </div>
+                    <Link
+                      key={subInd}
+                      href={`/shop?category=${encodeURIComponent(category?.categoryName)}&subCategory=${encodeURIComponent(subCategory?.name)}`}
+                      className="text-xs font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 p-2 rounded-md transition-colors"
+                    >
+                      {subCategory?.name}
+                    </Link>
                   ))}
                 </div>
               </div>

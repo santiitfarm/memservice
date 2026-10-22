@@ -3,23 +3,24 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { AiOutlineApple } from "react-icons/ai";
+import Image from "next/image";
 import {
-  FaAirbnb,
-  FaDashcube,
-  FaShopify,
-  FaUser,
-  FaUserDoctor,
-} from "react-icons/fa6";
-import { IoLogOut } from "react-icons/io5";
-import { MdCategory, MdOutlinePhoneIphone } from "react-icons/md";
+  LayoutDashboard,
+  Package,
+  FolderTree,
+  Tag,
+  ImageIcon,
+  ShoppingBag,
+  Stethoscope,
+  Users,
+  ExternalLink,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import DarkMood from "./ui/DarkMood";
-
 import { logout } from "@/app/actions";
 import { rankOf } from "@/lib/roles";
-import Image from "next/image";
-import { ShoppingBasket, Users } from "lucide-react";
-import { Users2 } from "lucide-react";
 
 export default function NavSideBar({ setIsCollapsed, isCollapsed, isSmall }) {
   const { data: session } = useSession();
@@ -27,122 +28,188 @@ export default function NavSideBar({ setIsCollapsed, isCollapsed, isSmall }) {
   const pathname = usePathname();
 
   const rank = rankOf(session?.user?.role);
-  const allNavItems = [
+
+  const navigationGroups = [
     {
-      href: "/dashboard",
-      icon: <FaDashcube className="w-6 h-6" />,
-      label: "Dashboard",
+      title: "Overview",
+      items: [
+        {
+          href: "/dashboard",
+          icon: LayoutDashboard,
+          label: "Dashboard",
+          exact: true,
+        },
+      ],
     },
     {
-      href: "/dashboard/user",
-      icon: <FaUser className="w-6 h-6" />,
-      label: "Users",
-      minRank: 2,
+      title: "Catalog",
+      items: [
+        {
+          href: "/dashboard/products",
+          icon: Package,
+          label: "Products",
+        },
+        {
+          href: "/dashboard/category",
+          icon: FolderTree,
+          label: "Categories",
+        },
+        {
+          href: "/dashboard/brands",
+          icon: Tag,
+          label: "Brands",
+        },
+        {
+          href: "/dashboard/banners",
+          icon: ImageIcon,
+          label: "Banners",
+        },
+      ],
     },
     {
-      href: "/dashboard/category",
-      icon: <MdCategory className="w-6 h-6" />,
-      label: "Category",
+      title: "Sales & Care",
+      items: [
+        {
+          href: "/dashboard/orders",
+          icon: ShoppingBag,
+          label: "Orders",
+        },
+        {
+          href: "/dashboard/doctors",
+          icon: Stethoscope,
+          label: "Doctors",
+        },
+      ],
     },
     {
-      href: "/dashboard/brands",
-      icon: <AiOutlineApple className="w-6 h-6" />,
-      label: "Brands",
+      title: "Settings",
+      items: [
+        {
+          href: "/dashboard/user",
+          icon: Users,
+          label: "Staff & Users",
+          minRank: 2,
+        },
+      ],
     },
     {
-      href: "/dashboard/products",
-      icon: <MdOutlinePhoneIphone className="w-6 h-6" />,
-      label: "Products",
-    },
-    {
-      href: "/dashboard/banners",
-      icon: <FaAirbnb className="w-6 h-6" />,
-      label: "Banners",
-    },
-    {
-      href: "/dashboard/orders",
-      icon: <FaShopify className="w-6 h-6" />,
-      label: "Orders",
-    },
-    {
-      href: "/dashboard/doctors",
-      icon: <FaUserDoctor className="w-6 h-6" />,
-      label: "Doctors",
-    },
-    {
-      href: process.env.NEXT_PUBLIC_URL || "https://www.memservicebd.com",
-      icon: <ShoppingBasket className="w-6 h-6" />,
-      label: "Shop",
+      title: "Storefront",
+      items: [
+        {
+          href: process.env.NEXT_PUBLIC_URL || "http://localhost:3000",
+          icon: ExternalLink,
+          label: "Live Store",
+          external: true,
+        },
+      ],
     },
   ];
 
-  const navItems = allNavItems.filter((item) => rank >= (item.minRank ?? 1));
-
   const handleSignOut = async () => {
     const res = await logout();
-    if (res.success) {
+    if (res?.success) {
       router.refresh();
       router.push("/admin-login");
     }
   };
 
+  const isLinkActive = (item) => {
+    if (item.external) return false;
+    if (item.exact) return pathname === item.href;
+    return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  };
+
   return (
-    <div
-      className={`bg-green-400 dark:bg-gray-900 relative text-white ${
-        isCollapsed ? "xl:w-20 w-16" : "xl:w-64 w-48"
-      } min-w-[4rem] flex flex-col duration-300`}
-      onClick={() => isSmall && setIsCollapsed(true)}
+    <aside
+      className={`relative flex flex-col border-r border-border bg-card text-card-foreground transition-all duration-300 z-30 shrink-0 ${
+        isCollapsed ? "w-16" : "w-64"
+      }`}
     >
-      <div className="flex items-center h-36 justify-center cursor-pointer">
-        <Image
-          width={175}
-          height={25}
-          alt="logo"
-          className=""
-          src="https://res.cloudinary.com/dbr3st8vn/image/upload/v1733630577/logo_luatve.png"
-        />
+      {/* Brand Header */}
+      <div className="flex h-16 items-center justify-between px-4 border-b border-border">
+        {!isCollapsed && (
+          <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
+            <span className="font-bold text-lg tracking-tight text-primary">Mem Service</span>
+            <span className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+              Admin
+            </span>
+          </Link>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={`p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors ${
+            isCollapsed ? "mx-auto" : ""
+          }`}
+        >
+          {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+        </button>
       </div>
 
-      <nav className="max-h-[calc(100vh-6rem)] overflow-y-auto flex-1">
-        {navItems.map(({ href, icon, label }) => (
-          <Link
-            key={href}
-            href={href}
-            target={label === "Shop" ? "_blank" : "_parent"}
-            className={`flex items-center py-3 px-4 rounded-md transition duration-200 dark:text-gray-500 ${
-              (
-                href === "/dashboard"
-                  ? pathname === "/dashboard"
-                  : pathname.includes(href)
-              )
-                ? "bg-gray-800 dark:bg-gray-950"
-                : "hover:bg-gray-800 dark:hover:bg-gray-950"
-            }`}
-          >
-            <div
-              className={`flex items-center ${
-                isCollapsed ? "justify-center" : "justify-start"
-              }`}
-            >
-              {icon}
-              {!isCollapsed && <span className="ml-4">{label}</span>}
+      {/* Navigation Groups */}
+      <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-6">
+        {navigationGroups.map((group) => {
+          const visibleItems = group.items.filter(
+            (item) => rank >= (item.minRank ?? 1)
+          );
+
+          if (visibleItems.length === 0) return null;
+
+          return (
+            <div key={group.title} className="space-y-1">
+              {!isCollapsed && (
+                <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-2">
+                  {group.title}
+                </p>
+              )}
+
+              {visibleItems.map((item) => {
+                const Icon = item.icon;
+                const active = isLinkActive(item);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    target={item.external ? "_blank" : undefined}
+                    title={isCollapsed ? item.label : undefined}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all select-none ${
+                      active
+                        ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    } ${isCollapsed ? "justify-center px-2" : ""}`}
+                    onClick={() => isSmall && setIsCollapsed(true)}
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                    {!isCollapsed && <span className="truncate">{item.label}</span>}
+                  </Link>
+                );
+              })}
             </div>
-          </Link>
-        ))}
+          );
+        })}
       </nav>
 
-      <div className="space-y-4 p-2 h-32 bg-green-400 dark:bg-gray-900 w-full">
+      {/* Bottom Controls: Theme & Logout */}
+      <div className="p-3 border-t border-border space-y-2 bg-card">
         <DarkMood isCollapsed={isCollapsed} />
-        {session?.user?.id && (
+
+        {session?.user && (
           <button
+            type="button"
             onClick={handleSignOut}
-            className="bg-blue-500 dark:bg-blue-900 hover:bg-blue-600 text-white dark:text-gray-400 py-3 px-4 rounded-md transition duration-200 flex items-center overflow-hidden"
+            title={isCollapsed ? "Logout" : undefined}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors ${
+              isCollapsed ? "justify-center px-2" : ""
+            }`}
           >
-            <IoLogOut className="w-6 h-6" />
-            {!isCollapsed && <span className="ml-4">Logout</span>}
+            <LogOut className="w-5 h-5 shrink-0" />
+            {!isCollapsed && <span className="truncate font-semibold">Log out</span>}
           </button>
         )}
       </div>
-    </div>
+    </aside>
   );
 }

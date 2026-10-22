@@ -2,72 +2,139 @@
 @tailwind components;
 @tailwind utilities;
 
-/* :root {
-  --background: #ffffff;
-  --foreground: #171717;
-} */
-
-body {
-  /* color: var(--foreground);
-  background: var(--background); */
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
+    --background: 255 255 255;
+    --foreground: 15 23 42;
+
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+
+    --primary: 11 122 163;
+    --primary-foreground: 255 255 255;
+
+    --secondary: 241 245 249;
+    --secondary-foreground: 15 23 42;
+
+    --muted: 241 245 249;
+    --muted-foreground: 71 85 105;
+
+    --accent: 242 151 31;
+    --accent-foreground: 15 23 42;
+
+    --destructive: 220 38 38;
+    --destructive-foreground: 255 255 255;
+
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 21 169 227;
+
     --radius: 0.5rem;
   }
+
+  .dark {
+    --background: 11 20 32;
+    --foreground: 248 250 252;
+
+    --card: 18 31 48;
+    --card-foreground: 248 250 252;
+
+    --popover: 22 38 58;
+    --popover-foreground: 248 250 252;
+
+    --primary: 21 169 227;
+    --primary-foreground: 11 20 32;
+
+    --secondary: 26 44 68;
+    --secondary-foreground: 248 250 252;
+
+    --muted: 24 40 62;
+    --muted-foreground: 148 163 184;
+
+    --accent: 242 151 31;
+    --accent-foreground: 11 20 32;
+
+    --destructive: 220 38 38;
+    --destructive-foreground: 255 255 255;
+
+    --border: 30 50 78;
+    --input: 30 50 78;
+    --ring: 21 169 227;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-family: Arial, Helvetica, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
 }
-
-/* Custom scrollbar styles for single product page */
-/* @layer utilities {
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #555 #f3f4f6; 
-  }
-
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px; 
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f3f4f6;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #888; 
-    border-radius: 10px; 
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #555; 
-  }
-} */
-
 
 @layer utilities {
   .custom-scrollbar {
-    scrollbar-width: thin; /* Firefox */
-    scrollbar-color: #555 #f3f4f6; /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--muted-foreground) / 0.4) transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    width: 8px; /* Scrollbar width */
-    height: 8px; /* Horizontal scrollbar height (if needed) */
+    width: 6px;
+    height: 6px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f3f4f6; /* Track color */
-    border-radius: 10px; /* Makes the track rounded */
+    background: transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #888; /* Thumb color */
-    border-radius: 50px; /* Fully round the thumb */
-    border: 2px solid #f3f4f6; /* Adds spacing around thumb */
+    background-color: rgb(var(--muted-foreground) / 0.4);
+    border-radius: 50px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #555; /* Thumb hover color */
+    background-color: rgb(var(--muted-foreground) / 0.6);
   }
 }
+
+/* react-toastify token restyling */
+.Toastify__toast {
+  background-color: rgb(var(--card)) !important;
+  color: rgb(var(--card-foreground)) !important;
+  border: 1px solid rgb(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+}
+.Toastify__close-button {
+  color: rgb(var(--muted-foreground)) !important;
+}
+.Toastify__close-button:hover {
+  color: rgb(var(--foreground)) !important;
+}
+.Toastify__toast--success .Toastify__toast-icon svg {
+  fill: #10b981 !important;
+}
+.Toastify__toast--error .Toastify__toast-icon svg {
+  fill: rgb(var(--destructive)) !important;
+}
+.Toastify__toast--warning .Toastify__toast-icon svg {
+  fill: #f59e0b !important;
+}
+.Toastify__toast--info .Toastify__toast-icon svg {
+  fill: rgb(var(--primary)) !important;
+}
+.Toastify__progress-bar {
+  background: rgb(var(--primary)) !important;
+}
+.Toastify__progress-bar--error {
+  background: rgb(var(--destructive)) !important;
+}
+

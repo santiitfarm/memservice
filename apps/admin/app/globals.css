@@ -2,39 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
-/* width */
+@layer base {
+  :root {
+    --background: 255 255 255;
+    --foreground: 15 23 42;
+
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+
+    --popover: 255 255 255;
+    --popover-foreground: 15 23 42;
+
+    --primary: 11 122 163;
+    --primary-foreground: 255 255 255;
+
+    --secondary: 241 245 249;
+    --secondary-foreground: 15 23 42;
+
+    --muted: 241 245 249;
+    --muted-foreground: 71 85 105;
+
+    --accent: 242 151 31;
+    --accent-foreground: 15 23 42;
+
+    --destructive: 220 38 38;
+    --destructive-foreground: 255 255 255;
+
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 21 169 227;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 11 20 32;
+    --foreground: 248 250 252;
+
+    --card: 18 31 48;
+    --card-foreground: 248 250 252;
+
+    --popover: 22 38 58;
+    --popover-foreground: 248 250 252;
+
+    --primary: 21 169 227;
+    --primary-foreground: 11 20 32;
+
+    --secondary: 26 44 68;
+    --secondary-foreground: 248 250 252;
+
+    --muted: 24 40 62;
+    --muted-foreground: 148 163 184;
+
+    --accent: 242 151 31;
+    --accent-foreground: 11 20 32;
+
+    --destructive: 220 38 38;
+    --destructive-foreground: 255 255 255;
+
+    --border: 30 50 78;
+    --input: 30 50 78;
+    --ring: 21 169 227;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+/* Scrollbars */
 ::-webkit-scrollbar {
-  width: 2px;
+  width: 6px;
+  height: 6px;
 }
-::-webkit-scrollbar:hover {
-  width: 4px;
-}
-
-/* Track */
 ::-webkit-scrollbar-track {
-  background: #1c2b77;
+  background: transparent;
 }
-
-/* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #0171a5;
+  background: rgb(var(--muted-foreground) / 0.3);
+  border-radius: 9999px;
 }
-
-/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: rgb(var(--muted-foreground) / 0.5);
 }
 
-input,
-select,
-textarea {
-  background: inherit;
-}
-
+/* Existing button legacy styles preserved */
 .button-light {
   background-color: #fefdfded;
   position: absolute;
-  border: 1px solid grad;
   border-radius: 100%;
   padding: 2px 2px;
   z-index: 10;
@@ -49,29 +111,48 @@ textarea {
   z-index: 10;
   position: relative;
 }
-.button-main::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 10rem;
-  width: 90%;
-  height: 75%;
-  /* background-color: #ffffff; */
-  /* background-color: #111827; */
-  z-index: 1;
-  box-shadow: inset 2px 2px 4px rgba(24, 16, 16, 0.549),
-    inset -2px -2px 5px rgba(88, 105, 123, 0.875), -2px -2px 5px #d5e3f2,
-    2px 2px 5px rgb(197, 217, 239);
-}
 .button-dark {
   background-color: #fefdfded;
   position: absolute;
-  border: 1px solid grad;
   border-radius: 100%;
   padding: 2px 2px;
   z-index: 10;
   box-shadow: inset 1px 1px 1px rgba(254, 255, 255, 0.723),
     inset -1px -1px 1px rgba(156, 164, 162, 0.842), -1px 1px 7px rgb(34, 29, 29);
 }
+
+/* react-toastify token restyling */
+.Toastify__toast {
+  background-color: rgb(var(--card)) !important;
+  color: rgb(var(--card-foreground)) !important;
+  border: 1px solid rgb(var(--border)) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+}
+.Toastify__close-button {
+  color: rgb(var(--muted-foreground)) !important;
+}
+.Toastify__close-button:hover {
+  color: rgb(var(--foreground)) !important;
+}
+.Toastify__toast--success .Toastify__toast-icon svg {
+  fill: #10b981 !important;
+}
+.Toastify__toast--error .Toastify__toast-icon svg {
+  fill: rgb(var(--destructive)) !important;
+}
+.Toastify__toast--warning .Toastify__toast-icon svg {
+  fill: #f59e0b !important;
+}
+.Toastify__toast--info .Toastify__toast-icon svg {
+  fill: rgb(var(--primary)) !important;
+}
+.Toastify__progress-bar {
+  background: rgb(var(--primary)) !important;
+}
+.Toastify__progress-bar--error {
+  background: rgb(var(--destructive)) !important;
+}
+

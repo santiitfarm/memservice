@@ -23,6 +23,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 async function SearchAndSupport({ menuData }) {
   const response = await fetch(`${process.env.API_URL}/api/category`);
@@ -30,38 +31,47 @@ async function SearchAndSupport({ menuData }) {
   const categoryData = data?.categories;
 
   return (
-    <section className="flex items-center justify-between gap-20">
+    <section className="flex items-center justify-between gap-6 lg:gap-12 py-2">
       {/* Logo Section */}
       <Link href={"/"}>
         <Image
-          className="w-full max-h-14 sm:max-h-16 lg:max-h-36 object-contain"
+          className="w-auto max-h-12 sm:max-h-14 lg:max-h-16 object-contain"
           src={"/assets/logo/logo.png"}
           width={400}
           height={400}
-          alt=""
+          alt="Mem Service"
         />
       </Link>
       {/* Search Section */}
-      <div className="w-full hidden lg:block">
+      <div className="w-full hidden lg:block max-w-2xl">
         <SearchCompo />
       </div>
-      {/* Support Section */}
-      <div className="">
-        <div className="hidden lg:block">
-          <div className="flex items-center gap-3 text-2xl text-sk">
+      {/* Support Section & Theme Toggle */}
+      <div className="flex items-center gap-4 shrink-0">
+        <div className="hidden lg:flex items-center gap-4">
+          <ThemeToggle compact={true} />
+          <div className="flex items-center gap-3 text-2xl text-primary">
             <span>
               <PiPhoneCallThin />
             </span>
-            <p className="flex flex-col text-nowrap text-sm text-black">
-              <span>Sales & Service Support</span>
+            <p className="flex flex-col text-nowrap text-sm text-foreground">
+              <span className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider">
+                Sales & Service
+              </span>
               <span>
-                <a href="tel:01711-655686">+8801711655686</a>
+                <a
+                  href="tel:01711-655686"
+                  className="font-bold hover:text-primary transition-colors"
+                >
+                  +8801711655686
+                </a>
               </span>
             </p>
           </div>
         </div>
 
-        <div className="relative flex items-center gap-6 lg:hidden">
+        <div className="relative flex items-center gap-4 lg:hidden">
+          <ThemeToggle compact={true} />
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Search size={25} strokeWidth={1.75} />

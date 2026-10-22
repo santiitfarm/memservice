@@ -3,11 +3,11 @@ import MainFooter from "./MainFooter";
 
 function Footer() {
   return (
-    <footer className="mt-14 border-t border-light-mist bg-white text-deep-sea-blue">
+    <footer className="mt-14 border-t border-border bg-card text-foreground transition-colors">
       <div className="container mx-auto">
         <MainFooter />
       </div>
-      <div className="bg-deep-sea-blue">
+      <div className="bg-deep-sea-blue dark:bg-card/80 border-t border-border/40">
         <Copyright />
       </div>
     </footer>

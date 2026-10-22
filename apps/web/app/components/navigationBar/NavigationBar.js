@@ -16,10 +16,11 @@ const navigationInfo = [
   { name: "Offer", url: "/offer" },
 ];
 
+
 function NavigationBar() {
   return (
     <>
-      <section className="w-full h-16 sm:h-20 xl:h-full sticky top-0 z-50 bg-sky-50 xl:bg-white">
+      <section className="w-full h-16 sm:h-20 xl:h-full sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border transition-colors">
         <div className="container mx-auto px-3 lg:px-6 mb-2 lg:mb-4 xl:mb-8">
           <div>
             <SearchAndSupport menuData={navigationInfo} />
@@ -30,7 +31,7 @@ function NavigationBar() {
         </div>
       </section>
 
-      <div className="lg:hidden w-full fixed bottom-0 bg-white z-50 p-3 border">
+      <div className="lg:hidden w-full fixed bottom-0 bg-card text-card-foreground z-50 p-3 border-t border-border shadow-lg transition-colors">
         <MobileNavBar />
       </div>
     </>
@@ -38,3 +39,4 @@ function NavigationBar() {
 }
 
 export default NavigationBar;
+

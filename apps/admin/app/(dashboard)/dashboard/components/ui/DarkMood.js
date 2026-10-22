@@ -1,174 +1,104 @@
-// "use client";
-
-// import { useEffect, useCallback, useState } from "react";
-// import { AiFillSun, AiFillMoon } from "react-icons/ai";
-
-// export default function DarkModeToggle({ isCollapsed }) {
-//   const [isDark, setIsDark] = useState(false);
-
-//   useEffect(() => {
-//     const theme = localStorage.getItem("theme");
-//     const prefersDark = window.matchMedia(
-//       "(prefers-color-scheme: dark)"
-//     ).matches;
-
-//     if (theme === "dark" || (!theme && prefersDark)) {
-//       document.documentElement.classList.add("dark");
-//       setIsDark(true);
-//     } else {
-//       document.documentElement.classList.remove("dark");
-//       setIsDark(false);
-//     }
-//   }, []);
-
-//   const toggleTheme = useCallback(() => {
-//     setIsDark((prevIsDark) => {
-//       const newIsDark = !prevIsDark;
-//       if (newIsDark) {
-//         document.documentElement.classList.add("dark");
-//         localStorage.setItem("theme", "dark");
-//       } else {
-//         document.documentElement.classList.remove("dark");
-//         localStorage.setItem("theme", "light");
-//       }
-//       return newIsDark;
-//     });
-//   }, []);
-
-//   const handleKeyDown = useCallback(
-//     (event) => {
-//       if (event.key === "Enter" || event.key === " ") {
-//         event.preventDefault();
-//         toggleTheme();
-//       }
-//     },
-//     [toggleTheme]
-//   );
-
-//   return (
-//     <div className="flex items-center w-full">
-//       <button
-//         onClick={toggleTheme}
-//         onKeyDown={handleKeyDown}
-//         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-//         className={`relative flex items-center justify-between gap-2 px-1 py-1 overflow-hidden transition duration-300 ease-in-out bg-blue-500 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:bg-gray-700 ${
-//           isCollapsed ? "w-11" : "w-32"
-//         }`}
-//       >
-//         <span className="sr-only">{isDark ? "Light" : "Dark"} mode</span>
-//         <span
-//           className={`p-1.5 rounded-full ${
-//             isDark
-//               ? "bg-gray-700 text-yellow-400"
-//               : "bg-yellow-400 text-gray-900"
-//           } ${isCollapsed ? (isDark ? "hidden" : "block") : "block"}`}
-//         >
-//           <AiFillSun className="w-6 h-6" aria-hidden="true" />
-//         </span>
-//         <span
-//           className={`p-1.5 rounded-full ${
-//             isDark ? "bg-blue-900 text-white" : "bg-gray-400 text-gray-700"
-//           }`}
-//         >
-//           <AiFillMoon className="w-6 h-6" aria-hidden="true" />
-//         </span>
-//         {!isCollapsed && (
-//           <span
-//             className={`absolute w-9 h-9 transition-transform duration-300 ease-in-out transform rounded-full shadow-md ${
-//               isDark
-//                 ? "translate-x-[5.3rem] dark:bg-gray-900"
-//                 : "translate-x-0 bg-white"
-//             }`}
-//             style={{ width: isCollapsed ? "1.5rem" : "2.25rem" }}
-//           />
-//         )}
-//       </button>
-//     </div>
-//   );
-// }
 "use client";
 
-import { MoonIcon, SunMediumIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Sun, Moon, Laptop } from "lucide-react";
 
-export default function DarkModeToggle({ isCollapsed }) {
-  const [isDark, setIsDark] = useState(false);
+export default function DarkModeToggle({ isCollapsed = false, className = "" }) {
+  const [theme, setTheme] = useState("system");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const theme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches;
+    setMounted(true);
+    const stored = localStorage.getItem("theme") || "system";
+    setTheme(stored);
+  }, []);
 
-    if (theme === "dark" || (!theme && prefersDark)) {
+  const applyTheme = (nextTheme) => {
+    setTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+
+    const isDark =
+      nextTheme === "dark" ||
+      (nextTheme === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    if (isDark) {
       document.documentElement.classList.add("dark");
-      setIsDark(true);
     } else {
       document.documentElement.classList.remove("dark");
-      setIsDark(false);
     }
-  }, []);
+  };
 
-  const toggleTheme = useCallback(() => {
-    setIsDark((prevIsDark) => {
-      const newIsDark = !prevIsDark;
-      if (newIsDark) {
-        document.documentElement.classList.add("dark");
-        localStorage.setItem("theme", "dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-        localStorage.setItem("theme", "light");
-      }
-      return newIsDark;
-    });
-  }, []);
+  if (!mounted) {
+    return (
+      <div className={`h-9 w-full rounded-lg bg-muted/50 animate-pulse ${className}`} />
+    );
+  }
 
-  const handleKeyDown = useCallback(
-    (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        toggleTheme();
-      }
-    },
-    [toggleTheme]
-  );
+  if (isCollapsed) {
+    const isDark =
+      theme === "dark" ||
+      (theme === "system" &&
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    return (
+      <button
+        onClick={() => applyTheme(isDark ? "light" : "dark")}
+        aria-label="Toggle theme"
+        className={`p-2 rounded-lg bg-muted text-foreground hover:bg-muted/80 transition-colors flex items-center justify-center ${className}`}
+      >
+        {isDark ? <Moon className="w-5 h-5 text-sky-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
+      </button>
+    );
+  }
 
   return (
-    <div className="flex items-center w-full">
+    <div
+      role="group"
+      aria-label="Theme selector"
+      className={`flex items-center justify-between p-1 rounded-lg bg-muted border border-border text-muted-foreground ${className}`}
+    >
       <button
-        onClick={toggleTheme}
-        onKeyDown={handleKeyDown}
-        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-        className={`relative button-main flex ${
-          !isDark ? "after:bg-green-400" : "after:bg-custom-dark"
-        } items-center justify-between gap-2 h-12 px-2 py-2 overflow-hidden transition duration-300 ease-in-out  ${
-          isCollapsed ? "w-11" : "w-32"
+        type="button"
+        onClick={() => applyTheme("light")}
+        aria-pressed={theme === "light"}
+        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${
+          theme === "light"
+            ? "bg-card text-foreground shadow-sm"
+            : "hover:text-foreground"
         }`}
       >
-        <span className="sr-only">{isDark ? "Light" : "Dark"} mode</span>
-        <span
-          className={`button-light  transition duration-300 ease-in-out  ${
-            isDark ? "invisible left-12" : "block left-2"
-          }`}
-          // style={{
-          //   left: "10px",
-          // }}
-        >
-          <SunMediumIcon
-            className={`w-7 h-7 ${
-              isDark ? "text-[#cfcfcfc2]" : "text-yellow-400"
-            }`}
-            aria-hidden="true"
-          />
-        </span>
-        <span className={`button-dark ${!isDark ? "hidden" : "block right-2"}`}>
-          <MoonIcon
-            className={`w-7 h-7 ${
-              !isDark ? "text-[#cfcfcfc2]" : "text-blue-400"
-            }`}
-            aria-hidden="true"
-          />
-        </span>
+        <Sun className="w-3.5 h-3.5 text-amber-500" />
+        <span>Light</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => applyTheme("system")}
+        aria-pressed={theme === "system"}
+        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${
+          theme === "system"
+            ? "bg-card text-foreground shadow-sm"
+            : "hover:text-foreground"
+        }`}
+      >
+        <Laptop className="w-3.5 h-3.5" />
+        <span>System</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => applyTheme("dark")}
+        aria-pressed={theme === "dark"}
+        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${
+          theme === "dark"
+            ? "bg-card text-foreground shadow-sm"
+            : "hover:text-foreground"
+        }`}
+      >
+        <Moon className="w-3.5 h-3.5 text-sky-400" />
+        <span>Dark</span>
       </button>
     </div>
   );

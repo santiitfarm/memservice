@@ -7,11 +7,11 @@ async function Hero() {
   const sliderData = data?.slider;
 
   return (
-    <main className="w-full h-full container mx-auto px-3 lg:px-6 xl:grid xl:grid-cols-12 gap-6">
-      <div className="hidden xl:block xl:col-span-3 h-full">
+    <main className="w-full h-full container mx-auto px-3 lg:px-6 xl:grid xl:grid-cols-12 gap-6 items-start relative z-10">
+      <div className="hidden xl:block xl:col-span-3 relative z-30">
         <Category />
       </div>
-      <div className="w-full xl:col-span-9 h-full">
+      <div className="w-full xl:col-span-9 relative z-10">
         <HeroSlider sliderData={sliderData} />
       </div>
     </main>

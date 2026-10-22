@@ -24,22 +24,22 @@ function MainFooter() {
             alt={SITE.name}
           />
         </Link>
-        <p className="max-w-sm text-sm leading-6 text-neutral-gray">
+        <p className="max-w-sm text-sm leading-6 text-muted-foreground">
           {SITE.tagline}
         </p>
         <ul className="flex flex-col gap-3">
           {contact.map(({ Icon, text, href }) => (
             <li key={text} className="flex items-start gap-3 text-sm">
-              <Icon className="mt-0.5 shrink-0 text-lg text-sky-blue" />
+              <Icon className="mt-0.5 shrink-0 text-lg text-primary" />
               {href ? (
                 <a
                   href={href}
-                  className="transition-colors hover:text-sky-blue"
+                  className="transition-colors hover:text-primary text-foreground"
                 >
                   {text}
                 </a>
               ) : (
-                <span>{text}</span>
+                <span className="text-foreground">{text}</span>
               )}
             </li>
           ))}
@@ -54,7 +54,7 @@ function MainFooter() {
           aria-label={group.title}
           className="col-span-1 lg:col-span-2"
         >
-          <h3 className="mb-4 text-base font-semibold text-deep-sea-blue">
+          <h3 className="mb-4 text-base font-bold text-foreground tracking-tight">
             {group.title}
           </h3>
           <ul className="flex flex-col gap-3">
@@ -62,7 +62,7 @@ function MainFooter() {
               <li key={link.url}>
                 <Link
                   href={link.url}
-                  className="text-sm text-neutral-gray transition-colors duration-200 hover:text-sky-blue"
+                  className="text-sm text-muted-foreground transition-colors duration-200 hover:text-primary"
                 >
                   {link.name}
                 </Link>
