@@ -10,6 +10,32 @@ const categorySchema = new Schema(
     categoryImg: {
       type: String,
     },
+    slug: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      index: true,
+    },
+    description: {
+      type: String,
+      default: "",
+    },
+    order: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+    featured: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+      index: true,
+    },
 
     brandList: {
       type: [

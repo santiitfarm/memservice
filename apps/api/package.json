@@ -24,6 +24,7 @@
     "jose": "^5.9.6",
     "lottie-react": "^2.4.0",
     "lucide-react": "^0.462.0",
+    "mongodb": "^6.10.0",
     "mongoose": "^8.8.3",
     "next": "15.1.0",
     "next-auth": "5.0.0-beta.25",
@@ -40,10 +41,10 @@
     "recharts": "^2.13.3",
     "resend": "^4.0.1",
     "rimraf": "^6.0.1",
+    "sanitize-html": "^2.18.1",
     "sslcommerz-lts": "^1.1.0",
     "streamifier": "^0.1.1",
-    "tailwind-merge": "^2.5.5",
-    "mongodb": "^6.10.0"
+    "tailwind-merge": "^2.5.5"
   },
   "devDependencies": {
     "eslint": "^8",

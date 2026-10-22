@@ -202,10 +202,340 @@ for (const doc of sampleDoctors) {
   );
 }
 
+// ==========================================
+// --- CMS Data Layer & Settings Seeds ---
+// ==========================================
+
+// 1. Site Settings (Singleton)
+await db.collection("sitesettings").updateOne(
+  { key: "site" },
+  {
+    $set: {
+      siteName: "Mem Service",
+      tagline: "Genuine Medicines, Healthcare & Consultations Across Bangladesh",
+      logoLight: "/assets/logo/logo.png",
+      logoDark: "/assets/logo/logo.png",
+      favicon: "/favicon.ico",
+      contact: {
+        phone: "+8801711655686",
+        whatsapp: "+8801711655686",
+        email: "support@memservice.com",
+        address: "Suite #402, Sena Kalyan Bhaban, Motijheel C/A, Dhaka-1000",
+        mapUrl: "https://maps.google.com/?q=Motijheel+Dhaka",
+        workingHours: "9:00 AM - 10:00 PM (Everyday)",
+      },
+      social: {
+        facebook: "https://facebook.com/memservicebd",
+        instagram: "https://instagram.com/memservicebd",
+        youtube: "https://youtube.com/@memservicebd",
+        tiktok: "",
+        x: "",
+        linkedin: "https://linkedin.com/company/memservice",
+      },
+      seo: {
+        defaultTitle: "Mem Service - Healthcare, Medicines & Consultations in Bangladesh",
+        titleTemplate: "%s | Mem Service",
+        defaultDescription: "Order genuine prescription medicines, OTC health products, and book verified specialist doctor consultations online across Bangladesh.",
+        ogImage: "/assets/logo/logo.png",
+      },
+      header: {
+        topBarText: "Express delivery inside Dhaka within 24 hours | Call +8801711655686",
+        showSearch: true,
+        showThemeToggle: true,
+      },
+      footer: {
+        about: "Mem Service provides authentic medicines, medical equipment, and telemedicine consultations with licensed physicians throughout Bangladesh.",
+        copyrightText: "Mem Service. All rights reserved.",
+        showPaymentBadges: true,
+      },
+      announcement: {
+        text: "Flat 10% discount on all wellness devices this week!",
+        link: "/shop?category=Medical%20Devices",
+        enabled: true,
+      },
+      maintenance: {
+        enabled: false,
+        message: "We are currently undergoing scheduled maintenance. Please check back shortly.",
+      },
+      updatedAt: now,
+    },
+    $setOnInsert: { createdAt: now, __v: 0 },
+  },
+  { upsert: true }
+);
+
+// 2. Navigation Menus
+const SEED_MENUS = [
+  {
+    location: "header",
+    title: "Main Navigation",
+    items: [
+      { label: "Home", url: "/", type: "custom", openInNewTab: false, status: "active" },
+      { label: "Shop", url: "/shop", type: "custom", openInNewTab: false, status: "active" },
+      { label: "Consultation", url: "/consultation/doctor", type: "consultation", openInNewTab: false, status: "active" },
+      { label: "Offers", url: "/offer", type: "custom", openInNewTab: false, status: "active" },
+    ],
+  },
+  {
+    location: "mobile",
+    title: "Mobile Bottom Bar",
+    items: [
+      { label: "Home", url: "/", type: "custom", status: "active" },
+      { label: "Account", url: "/account", type: "custom", status: "active" },
+      { label: "Cart", url: "/cart", type: "custom", status: "active" },
+      { label: "Wishlist", url: "/wishlist", type: "custom", status: "active" },
+      { label: "Shop", url: "/shop", type: "custom", status: "active" },
+    ],
+  },
+  {
+    location: "footer-1",
+    title: "Company",
+    items: [
+      { label: "About Us", url: "/about-us", type: "page", status: "active" },
+      { label: "Our Doctors", url: "/consultation/doctor", type: "consultation", status: "active" },
+      { label: "Privacy Policy", url: "/privacy-policy", type: "page", status: "active" },
+      { label: "Terms & Conditions", url: "/terms-and-conditions", type: "page", status: "active" },
+    ],
+  },
+  {
+    location: "footer-2",
+    title: "Customer Service",
+    items: [
+      { label: "FAQs", url: "/faq", type: "page", status: "active" },
+      { label: "Refund & Return Policy", url: "/refund-and-return-policy", type: "page", status: "active" },
+      { label: "My Account", url: "/account", type: "custom", status: "active" },
+      { label: "Order Tracking", url: "/account", type: "custom", status: "active" },
+    ],
+  },
+];
+
+for (const menu of SEED_MENUS) {
+  await db.collection("menus").updateOne(
+    { location: menu.location },
+    { $set: { ...menu, updatedAt: now }, $setOnInsert: { createdAt: now, __v: 0 } },
+    { upsert: true }
+  );
+}
+
+// 3. CMS Pages (Migrated legal and informational pages)
+const SEED_PAGES = [
+  {
+    slug: "about-us",
+    title: "About Mem Service",
+    template: "about",
+    status: "published",
+    publishedAt: now,
+    content: `<h2>About Mem Service BD</h2><p>Mem Service BD is Bangladesh's trusted digital healthcare and medicine delivery platform. Through our digital platform, customers across Bangladesh receive authentic prescription medicines, health essentials, and medical devices directly at their doorstep.</p><p>We partner with top pharmaceutical manufacturers and licensed physicians to guarantee 100% genuine products, affordable prices, and prompt doorstep delivery.</p>`,
+    seo: { title: "About Us | Mem Service BD", description: "Learn about Mem Service BD, our mission, genuine medicine delivery, and verified doctor consultations." },
+  },
+  {
+    slug: "terms-and-conditions",
+    title: "Terms and Conditions",
+    template: "legal",
+    status: "published",
+    publishedAt: now,
+    content: `<h2>Terms of Service</h2><p>By accessing and placing orders through Mem Service BD, you agree to comply with our healthcare fulfillment and telemedicine terms of service. Prescription drugs require a valid prescription from a registered medical practitioner.</p><p>Standard delivery inside Dhaka operates within 12-24 hours. Outside Dhaka orders are securely fulfilled via our partner express couriers.</p>`,
+    seo: { title: "Terms and Conditions | Mem Service BD", description: "Terms and conditions governing orders, deliveries, and healthcare consultations on Mem Service BD." },
+  },
+  {
+    slug: "privacy-policy",
+    title: "Privacy Policy",
+    template: "legal",
+    status: "published",
+    publishedAt: now,
+    content: `<h2>Privacy and Data Protection</h2><p>Mem Service BD respects your privacy. All customer health information, medical prescriptions, and transaction data are strictly confidential and protected with enterprise-grade encryption.</p><p>We never share personal or medical records with third-party marketing services.</p>`,
+    seo: { title: "Privacy Policy | Mem Service BD", description: "How Mem Service BD protects and manages your personal and health consultation records." },
+  },
+  {
+    slug: "refund-and-return-policy",
+    title: "Refund & Return Policy",
+    template: "legal",
+    status: "published",
+    publishedAt: now,
+    content: `<h2>Returns & Refunds</h2><p>Customers can request a replacement or return within 48 hours of delivery if a product arrives damaged, unsealed, or incorrect. Unopened wellness items and sealed medical devices are eligible for exchange.</p><p>Due to health safety regulations, opened or temperature-sensitive medicines cannot be returned once accepted.</p>`,
+    seo: { title: "Refund & Return Policy | Mem Service BD", description: "Guidelines for returns, exchanges, and refunds at Mem Service BD." },
+  },
+];
+
+for (const page of SEED_PAGES) {
+  await db.collection("pages").updateOne(
+    { slug: page.slug },
+    { $set: { ...page, updatedAt: now }, $setOnInsert: { createdAt: now, __v: 0 } },
+    { upsert: true }
+  );
+}
+
+// 4. FAQ Groups & FAQs
+const generalGroup = await db.collection("faqgroups").findOneAndUpdate(
+  { slug: "general" },
+  { $set: { title: "General Questions", slug: "general", order: 1, status: "active", updatedAt: now }, $setOnInsert: { createdAt: now, __v: 0 } },
+  { upsert: true, returnDocument: "after" }
+);
+
+const deliveryGroup = await db.collection("faqgroups").findOneAndUpdate(
+  { slug: "delivery" },
+  { $set: { title: "Orders & Delivery", slug: "delivery", order: 2, status: "active", updatedAt: now }, $setOnInsert: { createdAt: now, __v: 0 } },
+  { upsert: true, returnDocument: "after" }
+);
+
+const SEED_FAQS = [
+  {
+    question: "Are medicines sold on Mem Service authentic?",
+    answer: "Yes, 100%. All medicines and medical equipment are procured directly from registered pharmaceutical companies and verified distributors.",
+    groupId: generalGroup?._id || null,
+    order: 1,
+    status: "active",
+  },
+  {
+    question: "How long does delivery take inside Dhaka?",
+    answer: "Delivery inside Dhaka takes between 12 to 24 hours. Express same-day delivery is available for urgent orders.",
+    groupId: deliveryGroup?._id || null,
+    order: 1,
+    status: "active",
+  },
+  {
+    question: "Can I pay with Cash on Delivery (COD)?",
+    answer: "Yes, Cash on Delivery is available across all 64 districts in Bangladesh.",
+    groupId: deliveryGroup?._id || null,
+    order: 2,
+    status: "active",
+  },
+];
+
+for (const faq of SEED_FAQS) {
+  await db.collection("faqs").updateOne(
+    { question: faq.question },
+    { $set: { ...faq, updatedAt: now }, $setOnInsert: { createdAt: now, __v: 0 } },
+    { upsert: true }
+  );
+}
+
+// 5. Delivery Zones
+const SEED_ZONES = [
+  {
+    key: "dhaka-inside",
+    label: "Inside Dhaka City",
+    description: "Standard delivery within Dhaka metropolitan area",
+    charge: 60,
+    freeAbove: 2000,
+    eta: "24-48 Hours",
+    etaDaysMin: 1,
+    etaDaysMax: 2,
+    codAvailable: true,
+    allowedPaymentMethods: ["cod", "bkash", "nagad", "sslcommerz"],
+    districts: ["Dhaka"],
+    areas: ["Mirpur", "Uttara", "Dhanmondi", "Gulshan", "Banani", "Motijheel", "Mohammadpur", "Badda"],
+    minOrder: 0,
+    status: "active",
+    order: 1,
+    isDefault: true,
+  },
+  {
+    key: "dhaka-outside",
+    label: "Dhaka Suburbs",
+    description: "Gazipur, Narayanganj, Savar, Keraniganj",
+    charge: 90,
+    freeAbove: 2500,
+    eta: "48-72 Hours",
+    etaDaysMin: 2,
+    etaDaysMax: 3,
+    codAvailable: true,
+    allowedPaymentMethods: ["cod", "bkash", "nagad", "sslcommerz"],
+    districts: ["Gazipur", "Narayanganj", "Munshiganj", "Narsingdi", "Manikganj"],
+    areas: ["Savar", "Tongi", "Keraniganj"],
+    minOrder: 0,
+    status: "active",
+    order: 2,
+    isDefault: false,
+  },
+  {
+    key: "all-bangladesh",
+    label: "All Bangladesh (Courier)",
+    description: "Nationwide express delivery to any district",
+    charge: 120,
+    freeAbove: 3000,
+    eta: "3-5 Business Days",
+    etaDaysMin: 3,
+    etaDaysMax: 5,
+    codAvailable: true,
+    allowedPaymentMethods: ["cod", "bkash", "nagad", "sslcommerz"],
+    districts: [],
+    areas: [],
+    minOrder: 0,
+    status: "active",
+    order: 3,
+    isDefault: false,
+  },
+];
+
+for (const zone of SEED_ZONES) {
+  await db.collection("deliveryzones").updateOne(
+    { key: zone.key },
+    { $set: { ...zone, updatedAt: now }, $setOnInsert: { createdAt: now, __v: 0 } },
+    { upsert: true }
+  );
+}
+
+// 6. Home Layout (Singleton)
+await db.collection("homelayouts").updateOne(
+  { key: "home" },
+  {
+    $set: {
+      key: "home",
+      sections: [
+        { key: "hero", type: "hero_slider", title: "Main Carousel", subtitle: "", enabled: true, order: 1 },
+        { key: "categories", type: "category_grid", title: "Shop by Category", subtitle: "Browse health essentials", enabled: true, order: 2 },
+        { key: "deals", type: "flash_deals", title: "Limited Time Offers", subtitle: "Save up to 30%", enabled: true, order: 3 },
+        { key: "banners", type: "banner_grid", title: "Promotions", subtitle: "", enabled: true, order: 4 },
+        { key: "doctors", type: "doctor_consultations", title: "Specialist Consultations", subtitle: "Talk with top doctors online", enabled: true, order: 5 },
+        { key: "testimonials", type: "testimonials", title: "What Our Patients Say", subtitle: "Real feedback from genuine customers", enabled: true, order: 6 },
+        { key: "features", type: "features_ribbon", title: "Why Choose Us", subtitle: "", enabled: true, order: 7 },
+      ],
+      updatedAt: now,
+    },
+    $setOnInsert: { createdAt: now, __v: 0 },
+  },
+  { upsert: true }
+);
+
+// 7. Departments for Consultations
+const SEED_DEPTS = [
+  { name: "General Medicine", slug: "general-medicine", description: "Internal medicine, fevers, infections & primary health", icon: "Stethoscope", order: 1, status: "active" },
+  { name: "Cardiology", slug: "cardiology", description: "Heart health, hypertension & cardiovascular care", icon: "HeartPulse", order: 2, status: "active" },
+  { name: "Orthopedics", slug: "orthopedics", description: "Bone joints, fractures & spine management", icon: "Activity", order: 3, status: "active" },
+  { name: "Gynecology", slug: "gynecology", description: "Women's health, maternity & reproductive care", icon: "Users", order: 4, status: "active" },
+  { name: "Pediatrics", slug: "pediatrics", description: "Child wellness, newborn care & vaccinations", icon: "Smile", order: 5, status: "active" },
+  { name: "Dermatology", slug: "dermatology", description: "Skin, hair, allergy & cosmetic dermatology", icon: "Sparkles", order: 6, status: "active" },
+];
+
+for (const dept of SEED_DEPTS) {
+  await db.collection("departments").updateOne(
+    { slug: dept.slug },
+    { $set: { ...dept, updatedAt: now }, $setOnInsert: { createdAt: now, __v: 0 } },
+    { upsert: true }
+  );
+}
+
+// 8. Sample Testimonials
+const SEED_TESTIMONIALS = [
+  { name: "Rafiqul Islam", role: "Patient", company: "Dhaka", content: "I ordered my father's regular cardiac medications at 10 AM, and it arrived by 4 PM sealed with a cooling pack. Exceptional service!", rating: 5, order: 1, status: "active" },
+  { name: "Shamima Akhter", role: "Verified Customer", company: "Chittagong", content: "Doctor consultation over video was quick and very detailed. The prescription was instantly available on my profile for medicine ordering.", rating: 5, order: 2, status: "active" },
+];
+
+for (const item of SEED_TESTIMONIALS) {
+  await db.collection("testimonials").updateOne(
+    { name: item.name },
+    { $set: { ...item, updatedAt: now }, $setOnInsert: { createdAt: now, __v: 0 } },
+    { upsert: true }
+  );
+}
+
 console.log("\nDashboard accounts (http://localhost:3002/admin-login)");
 console.table(USERS.map(({ email, password, role, status }) => ({ email, password, role, status })));
 console.log(`catalog: ${added} product(s) added, ${all.length - added} already present`);
 console.log(`doctors: ${sampleDoctors.length} sample doctor(s) configured`);
+console.log(`cms: SiteSettings, Menus, Pages, FAQs, DeliveryZones (${SEED_ZONES.length}), HomeLayout, and Departments seeded.`);
 
 await mongoose.disconnect();
+
 

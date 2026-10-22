@@ -22,6 +22,24 @@ const rules = [
     min: 1,
   },
   { re: /^\/api\/customerProfile\/[^/]+$/, methods: ["DELETE"], min: 1 },
+
+  // Secure Integrations Store (Writes = Super Admin [rank 3], Reads = Admin [rank 2])
+  { re: /^\/api\/integrations(\/|$)/, methods: WRITE, min: 3 },
+  { re: /^\/api\/integrations(\/|$)/, methods: ["GET"], min: 2 },
+
+  // Delivery Zones (Writes = Admin [rank 2], Reads = Public)
+  { re: /^\/api\/delivery\/zones(\/|$)/, methods: WRITE, min: 2 },
+
+  // CMS Writes (Admin [rank 2])
+  {
+    re: /^\/api\/cms\/(site|home|menus|pages|faqs|faq-groups|departments|testimonials)(\/|$)/,
+    methods: WRITE,
+    min: 2,
+  },
+
+  // CMS Internal Staff-Only Listing Reads
+  { re: /^\/api\/cms\/pages$/, methods: ["GET"], min: 1 },
+  { re: /^\/api\/cms\/menus$/, methods: ["GET"], min: 1 },
 ];
 
 function allowedOrigins() {
