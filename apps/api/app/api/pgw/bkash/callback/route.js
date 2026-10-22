@@ -4,6 +4,7 @@ import { Order } from "@/app/models/order-model";
 import { CustomerProfile } from "@/app/models/customer-profile-model";
 import { SAFE_CUSTOMER_FIELDS } from "@/lib/customer";
 import { cancelOrder } from "@/lib/orders";
+import { sendOrderConfirmationEmail } from "@/lib/mailer";
 
 import connectMongo from "@/services/mongo";
 
@@ -53,6 +54,12 @@ export async function GET(request) {
         order.status =
           order.payment_info.status === "paid" ? "processing" : "pending";
         await order.save();
+
+        if (order.payment_info.status === "paid") {
+          sendOrderConfirmationEmail(order).catch((err) =>
+            console.error("Failed to send order confirmation email:", err.message)
+          );
+        }
         const redirectUrl = new URL(
           `${process.env.NEXT_PUBLIC_APP_URL_FRONTEND}/complete-order`
         );

@@ -4,6 +4,7 @@ import Integration from "@/app/models/Integration";
 import { encryptSecret, maskSecretsMap } from "@/lib/secrets";
 import { getStaff, rankOf } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { invalidateIntegrationCache } from "@/lib/integrations/resolver";
 
 export async function GET(request, context) {
   try {
@@ -91,6 +92,7 @@ export async function PUT(request, context) {
     existing.updatedBy = staff._id;
 
     await existing.save();
+    invalidateIntegrationCache(key);
 
     await logAudit(
       staff,

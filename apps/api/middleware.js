@@ -76,8 +76,11 @@ export async function middleware(request) {
     return new NextResponse(null, { status: origin ? 204 : 403, headers: origin ? corsHeaders(origin) : {} });
   }
 
-  // Browser requests from an unknown site must never reach a state-changing handler.
-  if (requestOrigin && !originAllowed && WRITE.includes(method)) {
+  const isPgw = pathname.startsWith("/api/pgw/");
+
+  // Browser requests from an unknown site must never reach a state-changing handler,
+  // except external payment gateway redirects/IPN callbacks which POST from gateway domains.
+  if (requestOrigin && !originAllowed && WRITE.includes(method) && !isPgw) {
     return forbidden("Origin not allowed");
   }
 

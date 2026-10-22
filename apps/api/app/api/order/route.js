@@ -1,10 +1,11 @@
 import { CustomerProfile } from "@/app/models/customer-profile-model";
-
 import { Order } from "@/app/models/order-model";
 import Product from "@/app/models/product-model";
-import { createPayment } from "@/lib/bkash";
 import { SAFE_CUSTOMER_FIELDS } from "@/lib/customer";
-import { sendMail } from "@/lib/mailer";
+import { calculateDeliveryQuote } from "@/lib/delivery";
+import { getPaymentAdapter } from "@/lib/integrations/payments";
+import { getIntegration } from "@/lib/integrations/resolver";
+import { sendOrderConfirmationEmail } from "@/lib/mailer";
 import connectMongo from "@/services/mongo";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
@@ -37,59 +38,186 @@ export async function GET() {
 export async function POST(request) {
   await connectMongo();
 
+  const body = await request.json();
+
+  if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
+    return NextResponse.json(
+      { success: false, message: "Order must contain at least one item" },
+      { status: 400 }
+    );
+  }
+
+  // 1. Calculate items subtotal server-side & normalize fields
+  let subtotal = 0;
+  for (const item of body.items) {
+    if (!item.title && item.name) {
+      item.title = item.name;
+    }
+    const price = Number(item.price) || 0;
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    subtotal += price * qty;
+  }
+
+  // 2. Server-Side Delivery Quote Enforcement (SINGLE source of truth)
+  const zoneKey = body.shipping_details?.zoneKey;
+  const district = body.shipping_details?.district;
+  const area = body.shipping_details?.area;
+  const paymentMethod = (body.payment_info?.method || "cod").toLowerCase();
+
+  const deliveryQuote = await calculateDeliveryQuote({
+    zoneKey,
+    subtotal,
+    paymentMethod,
+    district,
+    area,
+  });
+
+  // Check if minimum order value was violated
+  if (deliveryQuote.reasons?.some((r) => r.includes("Minimum order value"))) {
+    return NextResponse.json(
+      { success: false, message: deliveryQuote.reasons.join(", ") },
+      { status: 400 }
+    );
+  }
+
+  // If COD chosen, verify COD availability for the delivery zone
+  if (paymentMethod === "cod" && !deliveryQuote.codAvailable) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: `Cash on Delivery is unavailable for ${deliveryQuote.zoneLabel}. Please select online payment.`,
+      },
+      { status: 400 }
+    );
+  }
+
+  // 3. Payment Gateway Enforcement
+  const adapter = getPaymentAdapter(paymentMethod);
+  if (!adapter) {
+    return NextResponse.json(
+      { success: false, message: `Unsupported payment method: ${paymentMethod}` },
+      { status: 400 }
+    );
+  }
+
+  const integration = await getIntegration(paymentMethod);
+  if (!integration || !integration.enabled) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: `Payment method "${paymentMethod}" is currently unavailable. Please choose another option.`,
+      },
+      { status: 400 }
+    );
+  }
+
+  // Recompute total amount strictly using server calculated quote (override client-sent charges)
+  const serverCharge = Number(deliveryQuote.charge);
+  const totalAmount = subtotal + serverCharge;
+
+  body.total_amount = totalAmount;
+  body.payment_info = {
+    ...(body.payment_info || {}),
+    method: paymentMethod,
+    provider: paymentMethod,
+    amount: totalAmount,
+    status: paymentMethod === "cod" ? "unpaid" : "pending",
+  };
+
+  body.shipping_details = {
+    ...(body.shipping_details || {}),
+    zoneKey: deliveryQuote.zoneKey,
+    zoneLabel: deliveryQuote.zoneLabel,
+    charge: serverCharge,
+    shipping_charge: serverCharge,
+    eta: deliveryQuote.eta,
+  };
+
+  if (!body.order_number) {
+    body.order_number = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const body = await request.json();
-
-    // Check and update stock first: it is rolled back with the transaction if anything fails
+    // Check and reserve product stock transactionally
     await updateProductStock(body.items, session);
 
-    // Process payment
-    let paymentData = null;
+    // Create or update customer profile
+    const customerInput =
+      typeof body.customer === "object" && body.customer !== null && !mongoose.Types.ObjectId.isValid(body.customer)
+        ? body.customer
+        : {
+            customer_name: body.customer_name || "Customer",
+            phone_number: body.phone_number || "01700000000",
+            email: body.email,
+          };
 
-    if (body.payment_info.method == "bkash") {
-      paymentData = await createBkashPayment(
-        body.payment_info.amount,
-        body.order_number,
-        body.customer.phone_number
-      );
-
-      body.payment_info.provider = "bkash";
-      body.paymentID = paymentData.paymentID;
-      body.bkashURL = paymentData.bkashURL;
+    if (customerInput.phone_number) {
+      body.email = customerInput.email || body.email;
+      body.customer_name = customerInput.customer_name || body.customer_name;
+      body.phone_number = customerInput.phone_number || body.phone_number;
+      body.customer = await createOrUpdateCustomer(customerInput, session);
+    } else if (body.customer && mongoose.Types.ObjectId.isValid(body.customer)) {
+      // Already an ObjectId reference
     }
 
-    // Create or update customer
-    if (body.customer) {
-      body.email = body?.customer?.email;
-      body.customer_name = body?.customer?.customer_name;
-      body.phone_number = body?.customer?.phone_number;
-      body.customer = await createOrUpdateCustomer(body.customer, session);
-    }
-
-    // Create order
+    // Create order document
     const [order] = await Order.create([body], { session });
 
-    // Update customer orders
-    await CustomerProfile.findByIdAndUpdate(
-      body.customer,
-      { $push: { orders: order._id } },
-      { session }
-    );
+    // Update customer orders array
+    if (body.customer) {
+      await CustomerProfile.findByIdAndUpdate(
+        body.customer,
+        { $push: { orders: order._id } },
+        { session }
+      );
+    }
 
     await session.commitTransaction();
 
-    // Send confirmation email
-    if (body.email) {
-      await sendOrderConfirmationEmail(order, body.email, body);
+    // 4. Initialize Payment with Provider Adapter
+    let paymentResult = null;
+    try {
+      paymentResult = await adapter.createPayment(order);
+    } catch (paymentErr) {
+      console.error(`Failed to initiate ${paymentMethod} payment session:`, paymentErr.message);
+      // For online gateways, if initialization fails, mark order cancelled and restock
+      if (paymentMethod !== "cod") {
+        await cancelOrder(order);
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Failed to connect with ${paymentMethod.toUpperCase()} gateway: ${paymentErr.message}`,
+          },
+          { status: 502 }
+        );
+      }
+    }
+
+    if (paymentResult) {
+      order.paymentID = paymentResult.paymentID || order.paymentID;
+      if (paymentResult.redirectUrl) {
+        order.bkashURL = paymentResult.redirectUrl; // keep backward compatibility field
+        order.payment_url = paymentResult.redirectUrl;
+      }
+      await order.save();
+    }
+
+    // For COD or immediate offline orders, trigger confirmation email immediately
+    if (paymentMethod === "cod" || paymentResult?.isImmediate) {
+      if (order.email || body.email) {
+        sendOrderConfirmationEmail(order).catch((err) =>
+          console.error("sendOrderConfirmationEmail error:", err.message)
+        );
+      }
     }
 
     return NextResponse.json({
       message: "Order created successfully",
       success: true,
-      payment_url: body.bkashURL,
+      payment_url: paymentResult?.redirectUrl || null,
       order,
     });
   } catch (error) {
@@ -108,127 +236,7 @@ export async function POST(request) {
     session.endSession();
   }
 }
-async function sendOrderConfirmationEmail(order, customerEmail, body) {
-  // console.log("order on main order", order);
-  const mailOptions = {
-    to: customerEmail,
-    subject: `Order Confirmation for #${order.order_number} - Thank you for your purchase!`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background-color: #f8f9fa; padding: 20px; text-align: center; }
-            .logo { max-width: 150px; }
-            .order-details { background-color: #ffffff; padding: 20px; border: 1px solid #dee2e6; border-radius: 5px; margin: 20px 0; }
-            .item-list { border-collapse: collapse; width: 100%; margin: 20px 0; }
-            .item-list th, .item-list td { border: 1px solid #dee2e6; padding: 12px; text-align: left; }
-            .item-list th { background-color: #f8f9fa; }
-            .total { background-color: #f8f9fa; padding: 15px; margin-top: 20px; text-align: right; }
-            .footer { text-align: center; margin-top: 30px; padding: 20px; background-color: #f8f9fa; }
-            .button { background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; }
-            .shipping-info { margin: 20px 0; padding: 15px; border-left: 4px solid #007bff; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <img src="https://res.cloudinary.com/dbr3st8vn/image/upload/v1733630577/logo_luatve.png" alt="Store Logo" class="logo">
-              <h1 style="color: #007bff;">Order Confirmation</h1>
-              <p>Order #${order?.order_number}</p>
-            </div>
 
-            <div class="order-details">
-              <h2>Thank you for your purchase!</h2>
-              <p>Dear ${body?.customer_name},</p>
-              <p>We're excited to confirm your order has been successfully placed.</p>
-
-              <div class="shipping-info">
-                <h3>Shipping Details</h3>
-                <p><strong>Name:</strong> ${body?.customer_name}</p>
-                <p><strong>Phone Number:</strong> ${body?.phone_number}</p>
-                <p><strong>Email:</strong> ${body?.email}</p>
-                <p><strong>Address:</strong> ${
-                  order?.shipping_details.address
-                }</p>
-              </div>
-
-              <h3>Order Summary</h3>
-              <table class="item-list">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${order?.items
-                    .map(
-                      (item) => `
-                    <tr>
-                      <td>
-                        <p>${item.title}</p>
-                      </td>
-                      <td>${item.quantity}</td>
-                      <td>${item.price}</td>
-                      <td>${item.quantity * item.price}</td>
-                    </tr>
-                  `
-                    )
-                    .join("")}
-                </tbody>
-              </table>
-
-              <div class="total">
-                <p><strong>Subtotal:</strong> ৳${
-                  order?.total_amount - order?.shipping_details.shipping_charge
-                }</p>
-                <p><strong>Shipping:</strong> ৳${
-                  order?.shipping_details.shipping_charge
-                }</p>
-                <p style="font-size: 1.2em;"><strong>Total Amount:</strong> ৳${
-                  order?.total_amount
-                }</p>
-              </div>
-
-              <div style="background-color: #f8f9fa; padding: 15px; margin-top: 20px;">
-                <h3>Need Help?</h3>
-                <p>If you have any questions, please contact our customer service:</p>
-                <p>Email: memservicebd@gmail.com</p>
-                <p>Phone: 01711-655686</p>
-                <p>website: <a href="https://www.memservicebd.com/" target="_blank">https://www.memservicebd.com/</a></p>
-              </div>
-            </div>
-
-            <div class="footer">
-              <p>Follow us on social media</p>
-              <div style="margin: 15px 0;">
-                <a href="https://www.facebook.com/memservicebd" style="margin: 0 10px;">Facebook</a>
-                <a href="https://www.instagram.com/memservicebd/" style="margin: 0 10px;">Instagram</a>
-                <a href="https://www.youtube.com/@memservicebd" style="margin: 0 10px;">Youtube</a>
-              </div>
-              <p>© ${new Date().getFullYear()} Your Store. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `,
-  };
-  // Email problems must not fail an order that is already committed.
-  const result = await sendMail(mailOptions);
-  if (result.ok) console.log(`Order email sent to ${customerEmail}`);
-}
-async function createBkashPayment(
-  amount,
-  merchantInvoiceNumber,
-  payerReference
-) {
-  return createPayment(Number(amount), merchantInvoiceNumber, payerReference);
-}
 
 async function updateProductStock(items, session) {
   for (const item of items) {
