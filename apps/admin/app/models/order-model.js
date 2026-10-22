@@ -14,6 +14,9 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    totalPrice: {
+      type: Number,
+    },
     quantity: {
       type: Number,
       default: 1,
@@ -46,7 +49,7 @@ const orderSchema = new Schema(
       required: true,
     },
     items: [productSchema],
-    total_amount: { type: String, required: true },
+    total_amount: { type: Number, required: true },
     status: {
       type: String,
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
@@ -54,7 +57,7 @@ const orderSchema = new Schema(
     },
     shipping_details: {
       address: { type: String, required: true },
-      shipping_charge: { type: String, default: "0" },
+      shipping_charge: { type: Number, default: 0 },
       shipping_method: { type: String, default: "in-shop" },
     },
     payment_info: {
@@ -66,7 +69,7 @@ const orderSchema = new Schema(
       },
 
       transaction_id: { type: String },
-      amount: { type: String, required: true },
+      amount: { type: Number, required: true },
     },
     tracking_number: { type: String },
     shipping_date: { type: Date },

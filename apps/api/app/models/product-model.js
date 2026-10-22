@@ -18,9 +18,9 @@ const productsSchema = new mongoose.Schema(
     category: { type: Schema.Types.ObjectId, ref: "Category" },
     brand: { type: Schema.Types.ObjectId, ref: "Brand" },
     color: { type: Array, required: false },
-    regular_price: { type: String, required: false },
-    discount_price: { type: String, required: false },
-    purchase_price: { type: String, required: false },
+    regular_price: { type: Number, default: 0 },
+    discount_price: { type: Number, default: 0 },
+    purchase_price: { type: Number, default: 0 },
 
     short_description: { type: String },
     product_features: { type: Array },

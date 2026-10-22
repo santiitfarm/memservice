@@ -5,7 +5,6 @@ import BillingForm from "./BillingForm";
 import PaymentSection from "./PaymentSection";
 import DeliverySection from "./DeliverySection";
 import OrderSummary from "./OrderSummary";
-import { generateOrderNumber } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
 export default function CheckoutForm({ product }) {
@@ -30,8 +29,16 @@ export default function CheckoutForm({ product }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setLoading(true);
+    setError(null);
     const formData = new FormData(event.target);
     const formValues = Object.fromEntries(formData.entries());
+
+    const clientTotal = Math.round(totalAmount * 100) / 100;
+    const idempotencyKey =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `idemp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
     const submissionData = {
       customer: {
         customer_name: formValues.name,
@@ -41,22 +48,24 @@ export default function CheckoutForm({ product }) {
       },
       payment_info: {
         method: formValues.payment,
-        amount: totalAmount.toFixed(2),
+        amount: clientTotal,
       },
       shipping_details: {
         address: formValues.address,
         shipping_method: selectedDeliveryArea,
         shipping_charge: deliveryCharges[selectedDeliveryArea],
       },
-      total_amount: totalAmount.toFixed(2),
-      order_number: generateOrderNumber("KST"),
-      items: productList.map((product) => ({
-        id: product.id,
-        title: product.title,
-        quantity: product.quantity,
-        price: product.discount,
-        totalPrice: (product.discount * product.quantity).toFixed(2),
-      })),
+      total_amount: clientTotal,
+      items: productList.map((product) => {
+        const unitPrice = Number(product.price || product.discount || product.regular_price) || 0;
+        return {
+          id: product.id,
+          title: product.title,
+          quantity: product.quantity,
+          price: unitPrice,
+          totalPrice: Math.round(unitPrice * product.quantity * 100) / 100,
+        };
+      }),
     };
     try {
       const response = await fetch(
@@ -65,35 +74,35 @@ export default function CheckoutForm({ product }) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey,
           },
           body: JSON.stringify(submissionData),
         }
       );
       setLoading(false);
       const data = await response.json();
-      console.log(data);
+
+      if (response.status === 409 && data.code === "PRICE_CHANGED") {
+        setError(
+          data.message ||
+            `Prices or delivery fee updated (New Total: ৳${data.total}). Please review your order.`
+        );
+        return;
+      }
+
       if (data?.success) {
-        setLoading(false);
         productList.forEach((item) => {
           removeCart(item.id);
         });
-        localStorage.removeItem("memservice", JSON.stringify(cart));
-        if (submissionData.payment_info.method !== "cod") {
-          console.log("payment url", data);
+        localStorage.removeItem("memservice");
+
+        if (submissionData.payment_info.method !== "cod" && data.payment_url) {
           router.push(data.payment_url);
         } else {
-          if (submissionData.payment_info.method === "cod") {
-            router.push("/complete-order?order_id=" + data?.order?._id);
-          } else {
-            console.log("complete order", data);
-            // router.push("/complete-order?orderId=" + submissionData.order_number);
-          }
+          router.push("/complete-order?order_id=" + (data?.order?._id || data?.order?.id));
         }
-        router.push(data?.payment_url);
-        //   router.push("/complete-order?order_id=" + data?.order?._id);
       } else {
-        setLoading(false);
-        setError(data?.message);
+        setError(data?.message || "Failed to place order. Please try again.");
       }
     } catch (error) {
       setLoading(false);

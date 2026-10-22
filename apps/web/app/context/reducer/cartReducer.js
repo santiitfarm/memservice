@@ -31,14 +31,19 @@ const CartReducer = (state, action) => {
 
         return { ...state, cart: updatedCart };
       } else {
+        const numDiscount = Number(discount) || 0;
+        const numRegular = Number(regular_price) || 0;
+        const effectivePrice = numDiscount > 0 ? numDiscount : numRegular;
+
         const newCartItem = {
-          stock,
+          stock: Number(stock) || 0,
           id,
           title,
           image,
-          purchase_price,
-          discount,
-          regular_price,
+          price: effectivePrice,
+          purchase_price: Number(purchase_price) || 0,
+          discount: numDiscount,
+          regular_price: numRegular,
           quantity,
           manufacturer_name,
           name,
@@ -95,11 +100,12 @@ const CartReducer = (state, action) => {
     }
 
     case "CART_TOTAL_PRICE": {
-      const totalPrice = state.cart.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      );
-      return { ...state, totalPrice: totalPrice.toFixed(2) };
+      const totalPrice = state.cart.reduce((total, item) => {
+        const itemPrice = Number(item.price || item.discount || item.regular_price) || 0;
+        return total + itemPrice * item.quantity;
+      }, 0);
+      const roundedTotal = Math.round((totalPrice + Number.EPSILON) * 100) / 100;
+      return { ...state, totalPrice: roundedTotal };
     }
 
     default:

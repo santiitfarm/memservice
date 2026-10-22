@@ -40,13 +40,13 @@ const Products = ({
 
     if (sort === "lowToHigh") {
       return filteredData.sort(
-        (a, b) => parseFloat(a.discount) - parseFloat(b.discount)
+        (a, b) => (Number(a.discount || a.currentPrice) || 0) - (Number(b.discount || b.currentPrice) || 0)
       );
     }
 
     if (sort === "highToLow") {
       return filteredData.sort(
-        (a, b) => parseFloat(b.discount) - parseFloat(a.discount)
+        (a, b) => (Number(b.discount || b.currentPrice) || 0) - (Number(a.discount || a.currentPrice) || 0)
       );
     }
 

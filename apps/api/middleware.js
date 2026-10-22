@@ -54,7 +54,8 @@ function corsHeaders(origin) {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Allow-Headers":
+      "Content-Type, Authorization, X-Requested-With, Idempotency-Key, X-Idempotency-Key",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
@@ -79,7 +80,8 @@ export async function middleware(request) {
   const isExternalAllowed =
     pathname.startsWith("/api/pgw/") ||
     pathname.startsWith("/api/couriers/") ||
-    pathname === "/api/track";
+    pathname === "/api/track" ||
+    pathname === "/api/cart/price";
 
   // Browser requests from an unknown site must never reach a state-changing handler,
   // except external payment/courier callbacks or public event tracking.

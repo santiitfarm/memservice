@@ -1,6 +1,10 @@
-export function generateOrderNumber(shopCode) {
-  const today = new Date();
-  const datePart = today.toISOString().split("T")[0].replace(/-/g, ""); // Format: YYYYMMDD
-  const timePart = today.toTimeString().split(" ")[0].replace(/:/g, ""); // Format: HHMMSS
-  return `ORD${datePart}${shopCode}${timePart}`;
+/**
+ * Deprecated: Client-side order number generation has been removed.
+ * All order numbers are generated atomically by the server (apps/api/app/models/Counter.js)
+ * in the format MS-YYMMDD-######.
+ */
+export function generateOrderNumber() {
+  return "";
 }
+
+export default generateOrderNumber;

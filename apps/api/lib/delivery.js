@@ -1,5 +1,5 @@
-import connectMongo from "@/services/mongo";
-import DeliveryZone from "@/app/models/DeliveryZone";
+import connectMongo from "../services/mongo.js";
+import DeliveryZone from "../app/models/DeliveryZone.js";
 
 /**
  * Single source of truth for delivery pricing and qualification.

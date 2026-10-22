@@ -1,11 +1,13 @@
+import { Counter, getNextOrderNumber } from "@/app/models/Counter";
 import { CustomerProfile } from "@/app/models/customer-profile-model";
+import IdempotencyKey from "@/app/models/IdempotencyKey";
 import { Order } from "@/app/models/order-model";
 import Product from "@/app/models/product-model";
 import { SAFE_CUSTOMER_FIELDS } from "@/lib/customer";
-import { calculateDeliveryQuote } from "@/lib/delivery";
 import { getPaymentAdapter } from "@/lib/integrations/payments";
 import { getIntegration } from "@/lib/integrations/resolver";
 import { sendOrderConfirmationEmail } from "@/lib/mailer";
+import { priceOrder } from "@/lib/pricing";
 import connectMongo from "@/services/mongo";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
@@ -27,18 +29,43 @@ export async function GET() {
       orders,
     });
   } catch (error) {
-    console.log(error);
-    return NextResponse.json({
-      success: false,
-      message: error.message,
-    });
+    console.error("Error fetching orders:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request) {
   await connectMongo();
 
-  const body = await request.json();
+  // 1. Checkout Idempotency Header Check
+  const idempotencyHeader =
+    request.headers.get("idempotency-key") ||
+    request.headers.get("x-idempotency-key");
+  const idempotencyKey = idempotencyHeader ? idempotencyHeader.trim() : null;
+
+  if (idempotencyKey) {
+    try {
+      const existingKey = await IdempotencyKey.findOne({
+        key: idempotencyKey,
+      }).lean();
+      if (existingKey && existingKey.responseBody) {
+        return NextResponse.json(existingKey.responseBody, {
+          status: 200,
+          headers: { "X-Idempotent-Replay": "true" },
+        });
+      }
+    } catch (idempCheckErr) {
+      console.warn("Idempotency lookup warning:", idempCheckErr.message);
+    }
+  }
+
+  const body = await request.json().catch(() => ({}));
 
   if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
     return NextResponse.json(
@@ -47,45 +74,60 @@ export async function POST(request) {
     );
   }
 
-  // 1. Calculate items subtotal server-side & normalize fields
-  let subtotal = 0;
-  for (const item of body.items) {
-    if (!item.title && item.name) {
-      item.title = item.name;
-    }
-    const price = Number(item.price) || 0;
-    const qty = Math.max(1, Number(item.quantity) || 1);
-    subtotal += price * qty;
-  }
-
-  // 2. Server-Side Delivery Quote Enforcement (SINGLE source of truth)
+  // 2. Authoritative Server Pricing Engine
   const zoneKey = body.shipping_details?.zoneKey;
   const district = body.shipping_details?.district;
   const area = body.shipping_details?.area;
   const paymentMethod = (body.payment_info?.method || "cod").toLowerCase();
+  const couponCode = body.couponCode || "";
 
-  const deliveryQuote = await calculateDeliveryQuote({
-    zoneKey,
-    subtotal,
-    paymentMethod,
-    district,
-    area,
-  });
-
-  // Check if minimum order value was violated
-  if (deliveryQuote.reasons?.some((r) => r.includes("Minimum order value"))) {
+  let priced = null;
+  try {
+    priced = await priceOrder({
+      items: body.items,
+      zoneKey,
+      district,
+      area,
+      paymentMethod,
+      couponCode,
+      allowOutOfStock: false,
+    });
+  } catch (priceErr) {
+    console.warn("Order pricing validation failed:", priceErr.message);
+    if (priceErr.code === "OUT_OF_STOCK") {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "OUT_OF_STOCK",
+          message: priceErr.message,
+          productId: priceErr.productId,
+        },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { success: false, message: deliveryQuote.reasons.join(", ") },
+      {
+        success: false,
+        code: priceErr.code || "INVALID_ORDER",
+        message: priceErr.message,
+      },
       { status: 400 }
     );
   }
 
-  // If COD chosen, verify COD availability for the delivery zone
-  if (paymentMethod === "cod" && !deliveryQuote.codAvailable) {
+  // Delivery zone checks
+  if (priced.deliveryQuote?.reasons?.some((r) => r.includes("Minimum order value"))) {
+    return NextResponse.json(
+      { success: false, message: priced.deliveryQuote.reasons.join(", ") },
+      { status: 400 }
+    );
+  }
+
+  if (paymentMethod === "cod" && !priced.deliveryQuote?.codAvailable) {
     return NextResponse.json(
       {
         success: false,
-        message: `Cash on Delivery is unavailable for ${deliveryQuote.zoneLabel}. Please select online payment.`,
+        message: `Cash on Delivery is unavailable for ${priced.deliveryQuote?.zoneLabel || "this area"}. Please select an online payment method.`,
       },
       { status: 400 }
     );
@@ -111,146 +153,210 @@ export async function POST(request) {
     );
   }
 
-  // Recompute total amount strictly using server calculated quote (override client-sent charges)
-  const serverCharge = Number(deliveryQuote.charge);
-  const totalAmount = subtotal + serverCharge;
+  // 4. Anti-Tampering Check: Compare Client-Sent Total with Authoritative Server Total
+  const clientSentTotal =
+    body.total_amount !== undefined && body.total_amount !== null
+      ? Number(body.total_amount)
+      : null;
 
-  body.total_amount = totalAmount;
-  body.payment_info = {
-    ...(body.payment_info || {}),
-    method: paymentMethod,
-    provider: paymentMethod,
-    amount: totalAmount,
-    status: paymentMethod === "cod" ? "unpaid" : "pending",
-  };
-
-  body.shipping_details = {
-    ...(body.shipping_details || {}),
-    zoneKey: deliveryQuote.zoneKey,
-    zoneLabel: deliveryQuote.zoneLabel,
-    charge: serverCharge,
-    shipping_charge: serverCharge,
-    eta: deliveryQuote.eta,
-  };
-
-  if (!body.order_number) {
-    body.order_number = `ORD-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
-  }
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    // Check and reserve product stock transactionally
-    await updateProductStock(body.items, session);
-
-    // Create or update customer profile
-    const customerInput =
-      typeof body.customer === "object" && body.customer !== null && !mongoose.Types.ObjectId.isValid(body.customer)
-        ? body.customer
-        : {
-            customer_name: body.customer_name || "Customer",
-            phone_number: body.phone_number || "01700000000",
-            email: body.email,
-          };
-
-    if (customerInput.phone_number) {
-      body.email = customerInput.email || body.email;
-      body.customer_name = customerInput.customer_name || body.customer_name;
-      body.phone_number = customerInput.phone_number || body.phone_number;
-      body.customer = await createOrUpdateCustomer(customerInput, session);
-    } else if (body.customer && mongoose.Types.ObjectId.isValid(body.customer)) {
-      // Already an ObjectId reference
-    }
-
-    // Create order document
-    const [order] = await Order.create([body], { session });
-
-    // Update customer orders array
-    if (body.customer) {
-      await CustomerProfile.findByIdAndUpdate(
-        body.customer,
-        { $push: { orders: order._id } },
-        { session }
+  if (clientSentTotal !== null && !isNaN(clientSentTotal)) {
+    const diff = Math.abs(clientSentTotal - priced.totalAmount);
+    if (diff > 1.0) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "PRICE_CHANGED",
+          message: "Product prices or delivery charges have changed. Please review your cart.",
+          cart: priced.items,
+          total: priced.totalAmount,
+        },
+        { status: 409 }
       );
     }
+  }
 
-    await session.commitTransaction();
+  // 5. Transactional Order Creation and Atomic Stock Decrement
+  const session = await mongoose.startSession();
+  let createdOrder = null;
 
-    // 4. Initialize Payment with Provider Adapter
-    let paymentResult = null;
-    try {
-      paymentResult = await adapter.createPayment(order);
-    } catch (paymentErr) {
-      console.error(`Failed to initiate ${paymentMethod} payment session:`, paymentErr.message);
-      // For online gateways, if initialization fails, mark order cancelled and restock
-      if (paymentMethod !== "cod") {
-        await cancelOrder(order);
-        return NextResponse.json(
+  try {
+    await session.withTransaction(async () => {
+      // 5.1 Atomic inventory decrement with stock condition check
+      for (const item of priced.items) {
+        const updated = await Product.findOneAndUpdate(
           {
-            success: false,
-            message: `Failed to connect with ${paymentMethod.toUpperCase()} gateway: ${paymentErr.message}`,
+            _id: item.id,
+            stock: { $gte: item.quantity },
+            status: "active",
           },
-          { status: 502 }
+          {
+            $inc: {
+              stock: -item.quantity,
+              sold_out: item.quantity,
+            },
+          },
+          { session, new: true }
+        );
+
+        if (!updated) {
+          const currentProd = await Product.findById(item.id).session(session);
+          const name = currentProd ? currentProd.name : item.title || item.id;
+          const err = new Error(`Insufficient stock for product: ${name}`);
+          err.code = "OUT_OF_STOCK";
+          throw err;
+        }
+      }
+
+      // 5.2 Server-side atomic order number generation
+      const serverOrderNumber = await getNextOrderNumber(session);
+
+      // 5.3 Customer profile lookup or auto-creation
+      let customerId = body.customer;
+      const customerInput =
+        typeof body.customer === "object" &&
+        body.customer !== null &&
+        !mongoose.Types.ObjectId.isValid(body.customer)
+          ? body.customer
+          : {
+              customer_name: body.customer_name || "Customer",
+              phone_number: body.phone_number || "01700000000",
+              email: body.email,
+              address: body.shipping_details?.address || "",
+            };
+
+      if (customerInput.phone_number) {
+        body.email = customerInput.email || body.email;
+        body.customer_name = customerInput.customer_name || body.customer_name;
+        body.phone_number = customerInput.phone_number || body.phone_number;
+        customerId = await createOrUpdateCustomer(customerInput, session);
+      }
+
+      // 5.4 Build authoritative order document
+      const orderDoc = {
+        ...body,
+        order_number: serverOrderNumber,
+        customer: customerId,
+        items: priced.items.map((i) => ({
+          id: i.id,
+          title: i.title,
+          price: i.price,
+          quantity: i.quantity,
+          totalPrice: i.totalPrice,
+          color: i.color,
+          manufacturer: i.manufacturer,
+        })),
+        total_amount: priced.totalAmount,
+        shipping_details: {
+          ...(body.shipping_details || {}),
+          zoneKey: priced.deliveryQuote.zoneKey,
+          zoneLabel: priced.deliveryQuote.zoneLabel,
+          charge: priced.deliveryCharge,
+          shipping_charge: priced.deliveryCharge,
+          eta: priced.deliveryQuote.eta,
+        },
+        payment_info: {
+          ...(body.payment_info || {}),
+          method: paymentMethod,
+          provider: paymentMethod,
+          amount: priced.totalAmount,
+          status: paymentMethod === "cod" ? "unpaid" : "pending",
+        },
+      };
+
+      const [newOrder] = await Order.create([orderDoc], { session });
+      createdOrder = newOrder;
+
+      if (customerId) {
+        await CustomerProfile.findByIdAndUpdate(
+          customerId,
+          { $push: { orders: newOrder._id } },
+          { session }
         );
       }
-    }
-
-    if (paymentResult) {
-      order.paymentID = paymentResult.paymentID || order.paymentID;
-      if (paymentResult.redirectUrl) {
-        order.bkashURL = paymentResult.redirectUrl; // keep backward compatibility field
-        order.payment_url = paymentResult.redirectUrl;
-      }
-      await order.save();
-    }
-
-    // For COD or immediate offline orders, trigger confirmation email immediately
-    if (paymentMethod === "cod" || paymentResult?.isImmediate) {
-      if (order.email || body.email) {
-        sendOrderConfirmationEmail(order).catch((err) =>
-          console.error("sendOrderConfirmationEmail error:", err.message)
-        );
-      }
-    }
-
-    return NextResponse.json({
-      message: "Order created successfully",
-      success: true,
-      payment_url: paymentResult?.redirectUrl || null,
-      order,
     });
-  } catch (error) {
-    if (session.inTransaction()) {
-      await session.abortTransaction();
+  } catch (txError) {
+    console.error("Order transaction aborted:", txError.message);
+    if (txError.code === "OUT_OF_STOCK") {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "OUT_OF_STOCK",
+          message: txError.message,
+        },
+        { status: 400 }
+      );
     }
-    console.error("Error creating order:", error);
     return NextResponse.json(
       {
         success: false,
-        message: error.message,
+        message: txError.message || "Failed to create order",
       },
       { status: 500 }
     );
   } finally {
-    session.endSession();
+    await session.endSession();
   }
-}
 
-
-async function updateProductStock(items, session) {
-  for (const item of items) {
-    const product = await Product.findById(item.id).session(session);
-    if (!product) {
-      throw new Error(`Product with ID ${item.id} not found`);
+  // 6. Payment Gateway Initiation
+  let paymentResult = null;
+  try {
+    paymentResult = await adapter.createPayment(createdOrder);
+  } catch (paymentErr) {
+    console.error(
+      `Failed to initiate ${paymentMethod} payment session:`,
+      paymentErr.message
+    );
+    if (paymentMethod !== "cod") {
+      await cancelAndRestockOrder(createdOrder);
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Failed to connect with ${paymentMethod.toUpperCase()} gateway: ${paymentErr.message}`,
+        },
+        { status: 502 }
+      );
     }
-    if (product.stock < item.quantity) {
-      throw new Error(`Insufficient stock for product: ${product.name}`);
-    }
-    product.stock -= item.quantity;
-    product.sold_out += item.quantity;
-    await product.save({ session });
   }
+
+  if (paymentResult) {
+    createdOrder.paymentID = paymentResult.paymentID || createdOrder.paymentID;
+    if (paymentResult.redirectUrl) {
+      createdOrder.bkashURL = paymentResult.redirectUrl;
+      createdOrder.payment_url = paymentResult.redirectUrl;
+    }
+    await createdOrder.save();
+  }
+
+  // 7. Transactional Email Notification
+  if (paymentMethod === "cod" || paymentResult?.isImmediate) {
+    if (createdOrder.email || body.email) {
+      sendOrderConfirmationEmail(createdOrder).catch((err) =>
+        console.error("sendOrderConfirmationEmail error:", err.message)
+      );
+    }
+  }
+
+  // 8. Prepare Response & Save Idempotency Record
+  const responsePayload = {
+    message: "Order created successfully",
+    success: true,
+    payment_url: paymentResult?.redirectUrl || null,
+    order: createdOrder,
+  };
+
+  if (idempotencyKey) {
+    try {
+      await IdempotencyKey.create({
+        key: idempotencyKey,
+        orderId: createdOrder._id,
+        responseBody: responsePayload,
+      });
+    } catch (saveIdempErr) {
+      console.warn("Could not save idempotency record:", saveIdempErr.message);
+    }
+  }
+
+  return NextResponse.json(responsePayload, { status: 200 });
 }
 
 async function createOrUpdateCustomer(customerData, session) {
@@ -266,4 +372,36 @@ async function createOrUpdateCustomer(customerData, session) {
   }
 
   return customer._id;
+}
+
+async function cancelAndRestockOrder(order) {
+  if (!order) return;
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      await Order.findByIdAndUpdate(
+        order._id,
+        { status: "cancelled" },
+        { session }
+      );
+      if (Array.isArray(order.items)) {
+        for (const item of order.items) {
+          await Product.findByIdAndUpdate(
+            item.id,
+            {
+              $inc: {
+                stock: item.quantity,
+                sold_out: -item.quantity,
+              },
+            },
+            { session }
+          );
+        }
+      }
+    });
+  } catch (err) {
+    console.error("Failed to cancel and restock order:", err.message);
+  } finally {
+    await session.endSession();
+  }
 }

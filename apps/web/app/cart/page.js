@@ -7,7 +7,10 @@ const CartPage = () => {
   const { cart, setDecrement, setIncrement, removeCart } = useCartContext();
 
   const calculateSubtotal = () =>
-    cart.reduce((acc, product) => acc + product.discount * product.quantity, 0);
+    cart.reduce((acc, product) => {
+      const price = Number(product.price || product.discount || product.regular_price) || 0;
+      return acc + price * product.quantity;
+    }, 0);
 
   return (
     <section className="container mx-auto px-3 lg:px-6 flex flex-col mt-0 lg:mt-20 xl:mt-0 xl:flex-row justify-between gap-6">

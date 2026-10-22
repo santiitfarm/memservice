@@ -1,16 +1,20 @@
 export function transformProductData(product) {
+  const regularPrice = Number(product?.regular_price) || 0;
+  const discountPrice = Number(product?.discount_price) || 0;
+  const currentPrice = discountPrice > 0 ? discountPrice : regularPrice;
+
   return {
     image: product?.images && product.images[0], // Use the first image
-    name: product.model,
+    name: product.model || product.name,
     title: product.name,
     rating: "5", // Default rating since no reviews are present
-    currentPrice:
-      product.discount_price == 0
-        ? product.regular_price
-        : product.discount_price,
-    oldPrice: product.regular_price,
-    discount: product.discount_price == 0 ? 0 : product.discount_price,
-    soldOut: product.sold_out,
+    currentPrice,
+    oldPrice: regularPrice,
+    discount: discountPrice,
+    regular_price: regularPrice,
+    discount_price: discountPrice,
+    purchase_price: Number(product.purchase_price) || 0,
+    soldOut: product.sold_out || 0,
     filters: [
       {
         filterName: "category",
