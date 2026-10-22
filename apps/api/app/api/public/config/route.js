@@ -2,18 +2,20 @@ import { NextResponse } from "next/server";
 import connectMongo from "@/services/mongo";
 import Integration from "@/app/models/Integration";
 import DeliveryZone from "@/app/models/DeliveryZone";
+import SiteSettings from "@/app/models/SiteSettings";
 import { listCourierAdapters } from "@/lib/integrations/couriers";
 
 export async function GET() {
   try {
     await connectMongo();
 
-    const [integrations, activeZones] = await Promise.all([
+    const [integrations, activeZones, siteSettings] = await Promise.all([
       Integration.find({ enabled: true }).lean(),
       DeliveryZone.find({ status: "active" })
         .sort({ order: 1 })
         .select("key label charge freeAbove codAvailable eta")
         .lean(),
+      SiteSettings.findOne({ key: "site" }).lean(),
     ]);
 
     const enabledPaymentMethods = [];
@@ -87,6 +89,14 @@ export async function GET() {
       {
         success: true,
         config: {
+          supportPhone: siteSettings?.contact?.phone || "+8801711655686",
+          siteSettings: {
+            phone: siteSettings?.contact?.phone || "+8801711655686",
+            whatsapp: siteSettings?.contact?.whatsapp || "+8801711655686",
+            email: siteSettings?.contact?.email || "support@memservice.com",
+            address: siteSettings?.contact?.address || "",
+            workingHours: siteSettings?.contact?.workingHours || "9:00 AM - 10:00 PM (Daily)",
+          },
           paymentMethods: enabledPaymentMethods,
           deliveryZones: activeZones,
           couriers: enabledCouriers,

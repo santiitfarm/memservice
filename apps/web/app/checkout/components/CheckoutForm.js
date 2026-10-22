@@ -628,7 +628,7 @@ export default function CheckoutForm({ product }) {
                     Manual MFS Payment Instructions
                   </h4>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Please Send Money to our official MFS account: <strong>+8801711655686</strong> and enter your TrxID below for manual verification.
+                    Please Send Money to our official MFS account: <strong>{publicConfig?.siteSettings?.phone || publicConfig?.supportPhone || "+8801711655686"}</strong> and enter your TrxID below for manual verification.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { Calendar, Clock, ArrowRight, ShieldCheck } from "lucide-react";
 
 function DoctorAvatar({ image, name }) {
   const [hasError, setHasError] = useState(false);
@@ -18,19 +19,19 @@ function DoctorAvatar({ image, name }) {
 
   if (!image || hasError) {
     return (
-      <div className="w-24 h-24 md:w-28 md:h-28 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 flex items-center justify-center font-bold text-xl md:text-2xl shrink-0 shadow-inner">
+      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xl sm:text-2xl shrink-0 shadow-inner">
         {initials}
       </div>
     );
   }
 
   return (
-    <div className="w-24 h-24 md:w-28 md:h-28 relative rounded-lg overflow-hidden shrink-0 bg-gray-100 border border-gray-200">
+    <div className="w-20 h-20 sm:w-24 sm:h-24 relative rounded-2xl overflow-hidden shrink-0 bg-muted border border-border">
       <Image
         alt={name || "Doctor"}
         src={image}
         fill
-        sizes="(max-width: 768px) 96px, 112px"
+        sizes="(max-width: 768px) 80px, 96px"
         className="object-cover"
         onError={() => setHasError(true)}
       />
@@ -38,58 +39,81 @@ function DoctorAvatar({ image, name }) {
   );
 }
 
-const DoctorProfile = ({ doc }) => {
+export default function DoctorProfile({ doc }) {
   if (!doc) return null;
 
   return (
-    <Link
-      href={`/doctors/${doc._id}`}
-      className="flex flex-col sm:flex-row gap-4 border border-gray-200 hover:border-sky-blue bg-white shadow-sm hover:shadow-md p-4 rounded-xl transition-all duration-200 min-h-[180px]"
-    >
-      <DoctorAvatar image={doc.image} name={doc.name} />
+    <div className="flex flex-col justify-between border border-border bg-card rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-200">
+      <div>
+        {/* Header: Photo + Info */}
+        <div className="flex gap-4 items-start">
+          <DoctorAvatar image={doc.image} name={doc.name} />
 
-      <div className="flex flex-col justify-between flex-1 min-w-0">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="font-bold text-[#184363] text-lg truncate">
-              {doc.name || "Doctor"}
-            </h2>
-            <span
-              className={`inline-block h-2.5 w-2.5 rounded-full shrink-0 ${
-                doc.status === "active" ? "bg-green-500" : "bg-gray-400"
-              }`}
-              title={doc.status === "active" ? "Active" : "Inactive"}
-            />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                {doc.department || "General"}
+              </span>
+              <span className="flex items-center gap-0.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                <ShieldCheck className="w-3.5 h-3.5" /> Verified
+              </span>
+            </div>
+
+            <Link href={`/doctors/${doc._id}`} className="block group mt-1">
+              <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors truncate">
+                {doc.name || "Doctor"}
+              </h3>
+            </Link>
+
+            <p className="text-xs text-muted-foreground truncate">{doc.degree || "MBBS"}</p>
+            {doc.specialty && (
+              <p className="text-xs text-foreground/80 font-medium truncate mt-0.5">
+                {doc.specialty}
+              </p>
+            )}
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 truncate">{doc.degree || "MBBS"}</p>
         </div>
 
-        <div className="my-2 space-y-1">
-          {doc.specialty && (
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">Specialty</span>
-              <p className="text-xs font-medium text-gray-800 truncate">{doc.specialty}</p>
-            </div>
-          )}
-          {doc.hospital_name && (
-            <div>
-              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">Working In</span>
-              <p className="text-xs font-medium text-gray-700 truncate">{doc.hospital_name}</p>
-            </div>
-          )}
-        </div>
+        {/* Chamber / Hospital */}
+        {doc.hospital_name && (
+          <p className="text-xs text-muted-foreground mt-3 line-clamp-1">
+            Chamber: <span className="text-foreground">{doc.hospital_name}</span>
+          </p>
+        )}
 
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
-          <span className="text-gray-500">
-            Exp: <strong className="text-gray-800">{doc.experience || 0}+ Years</strong>
+        {/* Schedule & Experience */}
+        <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5 text-primary" />
+            <span className="font-medium text-foreground">
+              {doc.available_day || "Everyday"}
+            </span>
           </span>
-          <span className="text-sky-blue font-semibold">
-            {doc.consultation_fee ? `৳${doc.consultation_fee}` : "Free"}
+          <span className="text-muted-foreground">
+            Exp: <strong className="text-foreground">{doc.experience || 0}+ yrs</strong>
           </span>
         </div>
       </div>
-    </Link>
-  );
-};
 
-export default DoctorProfile;
+      {/* Footer: Fee & Action */}
+      <div className="mt-4 pt-3 border-t border-border flex items-center justify-between gap-3">
+        <div>
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">
+            Consultation Fee
+          </span>
+          <span className="text-base font-bold text-primary">
+            ৳{Number(doc.consultation_fee || 0).toLocaleString("en-BD")}
+          </span>
+        </div>
+
+        <Link
+          href={`/visit/checkout?doctor_id=${doc._id}`}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition shadow-sm"
+        >
+          <span>Book Now</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}

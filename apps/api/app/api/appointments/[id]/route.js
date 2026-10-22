@@ -11,8 +11,8 @@ export async function GET(request, { params }) {
   await connectMongo();
 
   const { id } = await params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return NextResponse.json({ success: false, message: "Invalid appointment ID." }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ success: false, message: "Appointment reference or ID is required." }, { status: 400 });
   }
 
   try {
@@ -20,7 +20,11 @@ export async function GET(request, { params }) {
     const { searchParams } = new URL(request.url);
     const queryPhone = searchParams.get("phone")?.trim();
 
-    const appointment = await Appointment.findById(id)
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { referenceCode: id.trim() }] }
+      : { referenceCode: id.trim() };
+
+    const appointment = await Appointment.findOne(query)
       .populate({
         path: "doctor",
         model: Doctor,

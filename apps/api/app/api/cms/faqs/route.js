@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import connectMongo from "@/services/mongo";
 import Faq from "@/app/models/Faq";
+import FaqGroup from "@/app/models/FaqGroup";
 import { sanitizeRichText } from "@/lib/sanitize";
 
 export async function GET(request) {

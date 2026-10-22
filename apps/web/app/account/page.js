@@ -3,37 +3,57 @@ import { redirect } from "next/navigation";
 import AccountSetting from "./_components/AccountSetting";
 import OrderHistory from "./_components/OrderHistory";
 import PersonalInfo from "./_components/PersonalInfo";
+import PrivacySection from "./_components/PrivacySection";
+
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "My Account - Mem Service",
+  description: "Manage your profile, order history, default shipping address, and privacy requests.",
+};
 
 export default async function AccountPage() {
   const session = await auth();
-  if (!session) {
+  if (!session || !session.accessToken) {
     return redirect("/account/login");
   }
-  if (!session.accessToken) {
-    return redirect("/account/login");
-  }
-  const response = await fetch(
-    `${process.env.API_URL}/api/customerProfile`,
-    {
+
+  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  let user = null;
+
+  try {
+    const response = await fetch(`${apiUrl}/api/customerProfile`, {
       headers: { Authorization: `Bearer ${session.accessToken}` },
       cache: "no-store",
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      user = data.customers?.[0] || null;
     }
-  );
-  if (!response.ok) {
-    return redirect("/account/login");
+  } catch (err) {
+    console.error("Failed to fetch customer profile:", err);
   }
-  const data = await response.json();
-  const user = data.customers?.[0];
+
   if (!user) {
     return redirect("/account/login");
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Account</h1>
+    <div className="min-h-screen bg-background py-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground">
+            Customer Account Portal
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Welcome back, <strong>{user.customer_name}</strong>. Manage your orders, delivery address, and preferences.
+          </p>
+        </div>
+
         <PersonalInfo user={user} />
         <OrderHistory user={user} />
+        <PrivacySection />
         <AccountSetting user={user} />
       </div>
     </div>

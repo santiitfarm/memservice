@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Search from "./Search";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import LanguageToggle from "@/components/ui/LanguageToggle";
 import { Menu as MenuIcon, PhoneCall, X } from "lucide-react";
 import { PiPhoneCallThin } from "react-icons/pi";
 import { useState } from "react";
@@ -76,11 +77,13 @@ export default function SearchAndSupport({ site, menus, categories = [] }) {
             </div>
           </div>
 
+          <LanguageToggle />
           <ThemeToggle compact={true} />
         </div>
 
-        {/* Mobile Actions: Theme Toggle + Menu Drawer */}
+        {/* Mobile Actions: Language Toggle + Theme Toggle + Menu Drawer */}
         <div className="flex items-center gap-2 lg:hidden">
+          <LanguageToggle compact={true} />
           <ThemeToggle compact={true} />
 
           <Sheet>

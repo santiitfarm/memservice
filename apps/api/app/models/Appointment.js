@@ -43,6 +43,12 @@ const appointmentSchema = new Schema(
       type: String,
       default: "morning",
     },
+    referenceCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     notes: {
       type: String,
       default: "",

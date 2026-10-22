@@ -1,24 +1,30 @@
+import { getSiteBootstrap } from "@/lib/cms";
 import Link from "next/link";
 import Print from "../account/orders/[orderId]/Print";
 import OrderCancel from "./components/OrderCancel";
 import { ShoppingBag, Printer, Download, CheckCircle } from "lucide-react";
+
 export default async function OrderCompletePage({ params, searchParams }) {
   const query = await searchParams;
   const orderId = query.order_id;
   const transactionStatus = query?.transactionStatus;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/order/${orderId}`,
-    {
-      headers: {
-        "X-Website-Origin": "true",
-      },
-    }
-  );
+  const [bootstrap, res] = await Promise.all([
+    getSiteBootstrap(),
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/order/${orderId}`,
+      {
+        headers: {
+          "X-Website-Origin": "true",
+        },
+      }
+    ),
+  ]);
   const data = await res.json();
+  const site = bootstrap?.site || {};
 
   if (data?.order?.status == "cancelled") {
-    return <OrderCancel order_no={data?.order?.order_number} />;
+    return <OrderCancel order_no={data?.order?.order_number} phone={site?.contact?.phone} />;
   }
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-50">

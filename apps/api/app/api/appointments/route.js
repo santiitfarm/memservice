@@ -162,6 +162,10 @@ export async function POST(request) {
       );
     }
 
+    const datePart = new Date().toISOString().slice(2, 10).replace(/-/g, "");
+    const randPart = Math.floor(1000 + Math.random() * 9000);
+    const referenceCode = `APT-${datePart}-${randPart}`;
+
     const appointment = await Appointment.create({
       doctor: doctorRecord._id,
       patient: {
@@ -175,6 +179,7 @@ export async function POST(request) {
       },
       preferredDate: appDate,
       preferredSlot,
+      referenceCode,
       notes: notes ? notes.trim() : "",
       status: "requested",
       feeSnapshot: {
@@ -221,6 +226,7 @@ export async function POST(request) {
         success: true,
         message: "Your appointment request has been submitted successfully.",
         appointment,
+        referenceCode: appointment.referenceCode || String(appointment._id),
       },
       { status: 201 }
     );

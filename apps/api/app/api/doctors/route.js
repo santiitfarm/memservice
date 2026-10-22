@@ -3,11 +3,32 @@ import Doctor from "@/app/models/doctor-model";
 import { dbConnect } from "@/utils/mongo";
 import { NextResponse } from "next/server";
 
-// GET: Retrieve all doctors
-export async function GET() {
+import { escapeRegex } from "@/lib/slug";
+
+// GET: Retrieve all doctors with optional department & search filtering
+export async function GET(req) {
   await dbConnect();
   try {
-    const doctors = await Doctor.find({});
+    const url = new URL(req.url);
+    const department = url.searchParams.get("department");
+    const search = url.searchParams.get("search") || url.searchParams.get("q");
+
+    const query = {};
+    if (department && department.toLowerCase() !== "all") {
+      query.department = { $regex: new RegExp(`^${escapeRegex(department.trim())}$`, "i") };
+    }
+    if (search && search.trim()) {
+      const esc = escapeRegex(search.trim());
+      query.$or = [
+        { name: { $regex: esc, $options: "i" } },
+        { specialty: { $regex: esc, $options: "i" } },
+        { hospital_name: { $regex: esc, $options: "i" } },
+        { degree: { $regex: esc, $options: "i" } },
+        { department: { $regex: esc, $options: "i" } },
+      ];
+    }
+
+    const doctors = await Doctor.find(query).sort({ createdAt: -1 });
     return NextResponse.json(doctors, { status: 200 });
   } catch (error) {
     return NextResponse.json(

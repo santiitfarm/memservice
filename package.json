@@ -24,7 +24,8 @@
     "db:seed": "node scripts/seed.mjs",
     "db:pull-atlas": "node scripts/pull-atlas.mjs",
     "health": "node scripts/health.mjs",
-    "test:phase1": "node scripts/verify-phase1.mjs"
+    "test:phase1": "node scripts/verify-phase1.mjs",
+    "crawl:web": "node scripts/crawl-web.mjs"
   },
   "devDependencies": {
     "@next/env": "15.1.0",

@@ -1,93 +1,81 @@
-import { UserPlus } from "lucide-react";
+import AppointmentBookingForm from "./components/AppointmentBookingForm";
 import Link from "next/link";
+import { ArrowLeft, Stethoscope, ShieldCheck } from "lucide-react";
 
-const DoctorVisitCheckOuPage = async ({ searchParams }) => {
-  const resolvedParams = await searchParams;
-  const doctor_id = resolvedParams?.doctor_id;
-  let doctorData = null;
+export const dynamic = "force-dynamic";
 
-  if (doctor_id) {
-    try {
-      const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const doctor = await fetch(`${apiUrl}/api/doctors/${doctor_id}`, { cache: "no-store" });
-      if (doctor.ok) {
-        const data = await doctor.json();
-        doctorData = data?.doctor || null;
-      }
-    } catch (err) {
-      console.error("Failed to fetch doctor:", err);
-    }
-  }
-  //   const submitForm = (e) => {
-  //     e.preventDefault();
-
-  //     const name = e.currentTarget.name.value;
-  //     const number = e.currentTarget.number.value;
-
-  //     console.log(name);
-  //     console.log(number);
-  //   };
-
-  const whatsappLink = `https://wa.me/${doctorData?.contract_number || "8801700000000"}`;
-  // const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-
-  return (
-    <section className="container mx-auto p-6">
-      <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <form>
-          <div className="flex items-center mb-4">
-            <span className="bg-gray-200 p-2 rounded-full">
-              <UserPlus />
-            </span>
-            <h2 className="text-lg font-medium ml-2">Patient details</h2>
-          </div>
-
-          <div className="flex flex-col space-y-2 rounded-lg px-4 py-2 mb-4">
-            <input
-              type="text"
-              name="name"
-              id="name"
-              required
-              placeholder="Enter your name"
-              className=" border border-gray-300 rounded-md text-gray-800 placeholder-gray-400 p-1"
-            />
-            <input
-              type="text"
-              name="number"
-              id="number"
-              required
-              placeholder="Enter your mobile number"
-              className=" border border-gray-300 rounded-md text-gray-800 placeholder-gray-400 p-1"
-            />
-          </div>
-
-          <p className="text-sm text-gray-500 mb-4">
-            You agree to our{" "}
-            <Link
-              href="/terms-and-conditions"
-              className="text-blue-500 underline"
-            >
-              Terms of Conditions
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy-policy" className="text-blue-500 underline">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-
-          <Link
-            href={whatsappLink}
-            // onClick={() => window.open(whatsappLink, "_blank")}
-            type="submit"
-            className="w-56 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700"
-          >
-            Send Whatsapp message
-          </Link>
-        </form>
-      </div>
-    </section>
-  );
+export const metadata = {
+  title: "Book Doctor Appointment - Mem Service",
+  description: "Request an appointment with specialist doctors in Bangladesh.",
 };
 
-export default DoctorVisitCheckOuPage;
+export default async function DoctorVisitCheckoutPage({ searchParams }) {
+  const resolvedParams = await searchParams;
+  const doctor_id = resolvedParams?.doctor_id;
+
+  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  let doctors = [];
+  let initialDoctor = null;
+
+  try {
+    const res = await fetch(`${apiUrl}/api/doctors`, { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      doctors = Array.isArray(data) ? data : data?.doctors || [];
+    }
+
+    if (doctor_id) {
+      initialDoctor = doctors.find((d) => d._id === doctor_id) || null;
+      if (!initialDoctor) {
+        const docRes = await fetch(`${apiUrl}/api/doctors/${doctor_id}`, { cache: "no-store" });
+        if (docRes.ok) {
+          const docData = await docRes.json();
+          initialDoctor = docData?.doctor || null;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to fetch doctors for booking:", err);
+  }
+
+  return (
+    <div className="min-h-screen bg-background py-8">
+      <div className="container mx-auto px-4 md:px-6 max-w-3xl">
+        {/* Navigation */}
+        <div className="mb-6 flex items-center justify-between">
+          <Link
+            href="/consultation/doctor"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Doctors List</span>
+          </Link>
+          <Link
+            href="/appointment/status"
+            className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
+            Lookup Existing Booking &rarr;
+          </Link>
+        </div>
+
+        {/* Page Header */}
+        <div className="mb-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-2">
+            <Stethoscope className="w-3.5 h-3.5" />
+            <span>Consultation Request</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground">
+            Doctor Appointment Request
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Fill in the patient details to request your doctor consultation appointment. No advance payment required.
+          </p>
+        </div>
+
+        {/* Main Booking Form */}
+        <AppointmentBookingForm doctors={doctors} initialDoctor={initialDoctor} />
+      </div>
+    </div>
+  );
+}

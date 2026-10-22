@@ -1,77 +1,80 @@
+import DoctorDirectory from "../components/DoctorDirectory";
 import capitalizeFirstLetter from "@/utils/capitalizeFirstLetter";
-import DoctorProfile from "../components/DoctorProfile";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-const DepartmentDoctorPage = async ({ params }) => {
+export async function generateMetadata({ params }) {
   const { deptName } = await params;
-  const dept = capitalizeFirstLetter(deptName);
+  const decoded = decodeURIComponent(deptName);
+  return {
+    title: `${capitalizeFirstLetter(decoded)} Doctors & Specialists - Mem Service`,
+    description: `Book consultation appointments with verified ${decoded} specialists in Bangladesh.`,
+  };
+}
+
+export default async function DepartmentDoctorPage({ params }) {
+  const { deptName } = await params;
+  const decodedDept = decodeURIComponent(deptName);
+  const deptTitle = capitalizeFirstLetter(decodedDept);
+
+  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
   let doctors = [];
+  let categories = [];
 
   try {
-    const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    const response = await fetch(`${apiUrl}/api/doctors`, {
-      cache: "no-store",
-    });
-    if (response.ok) {
-      const data = await response.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.doctors)
-        ? data.doctors
-        : [];
-      doctors = list.filter(
-        (doc) => (doc?.department || "").toLowerCase() === String(deptName).toLowerCase()
-      );
+    const [docRes, catRes] = await Promise.all([
+      fetch(`${apiUrl}/api/doctors`, { cache: "no-store" }),
+      fetch(`${apiUrl}/api/doccat`, { cache: "no-store" }),
+    ]);
+
+    if (docRes.ok) {
+      const data = await docRes.json();
+      doctors = Array.isArray(data) ? data : data?.doctors || [];
+    }
+
+    if (catRes.ok) {
+      const catData = await catRes.json();
+      categories = Array.isArray(catData) ? catData : catData?.categories || [];
     }
   } catch (error) {
     console.error("Failed to fetch department doctors:", error);
   }
 
   return (
-    <section className="container mx-auto px-4 md:px-6 py-8">
-      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+    <section className="container mx-auto px-4 md:px-6 py-8 max-w-6xl">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-deep-sea-blue">
-            {dept} Department
+          <Link
+            href="/consultation"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline mb-2"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>All Departments</span>
+          </Link>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground">
+            {deptTitle} Specialists
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Doctors specializing in {dept.toLowerCase()} consultations
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Doctors and healthcare professionals specializing in {deptTitle.toLowerCase()} care.
           </p>
         </div>
+
         <Link
-          href="/consultation/doctor"
-          className="text-sm font-semibold text-sky-blue hover:underline"
+          href="/appointment/status"
+          className="self-start sm:self-auto px-4 py-2 rounded-xl border border-border bg-card text-foreground text-xs font-semibold hover:bg-muted transition"
         >
-          View All Doctors &rarr;
+          Check Booking Status
         </Link>
       </div>
 
-      {doctors.length === 0 ? (
-        <div className="text-center py-16 px-4 bg-gray-50 rounded-2xl border border-gray-200 max-w-xl mx-auto">
-          <p className="text-lg font-semibold text-gray-700">
-            No doctors found in {dept}
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            We are currently adding doctors for this specialty. In the meantime, you can browse all available doctors.
-          </p>
-          <Link
-            href="/consultation/doctor"
-            className="mt-6 inline-block bg-sky-blue text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-sky-600 transition-colors"
-          >
-            Browse All Doctors
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {doctors.map((doctor, indx) => (
-            <DoctorProfile doc={doctor} key={doctor?._id || indx} />
-          ))}
-        </div>
-      )}
+      <DoctorDirectory
+        initialDoctors={doctors}
+        categories={categories}
+        selectedDepartment={decodedDept}
+      />
     </section>
   );
-};
-
-export default DepartmentDoctorPage;
+}
