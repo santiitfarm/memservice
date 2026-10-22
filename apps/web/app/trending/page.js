@@ -1,22 +1,46 @@
-import ColumnCard from "../components/productCart/columnsCart/ColumnCard";
+import CatalogListing from "../shop/_components/CatalogListing";
 
-export default async function OfferPage({}) {
-  const response = await fetch(`${process.env.API_URL}/api/product/trending`);
-  const data = await response.json();
+export const metadata = {
+  title: "Trending Health & Medicine Products | Mem Service",
+  description:
+    "See what customers across Bangladesh are buying most. Genuine trending medicines, wellness gear, and vitamins.",
+};
+
+export default async function TrendingPage({ searchParams }) {
+  const resolvedParams = await searchParams;
+  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  const query = new URLSearchParams();
+  for (const [key, val] of Object.entries(resolvedParams || {})) {
+    if (val) query.set(key, String(val));
+  }
+  if (!query.has("sort")) query.set("sort", "popular");
+  if (!query.has("limit")) query.set("limit", "24");
+
+  let catalogData = { items: [], total: 0, page: 1, pages: 1, limit: 24, facets: { categories: [], brands: [] } };
+  try {
+    const res = await fetch(`${apiUrl}/api/catalog/products?${query.toString()}`, {
+      next: { revalidate: 30 },
+    });
+    if (res.ok) {
+      catalogData = await res.json();
+    }
+  } catch (err) {
+    console.error("Trending page catalog fetch error:", err);
+  }
 
   return (
-    <div className="container mx-auto px-3 lg:px-6  gap-6 mt-6 lg:mt-20 xl:mt-6 relative">
-      <h1 className="text-2xl md:text-3xl font-bold text-deep-sea-blue capitalize text-center">
-        <strong>Trending Products</strong>
-      </h1>
-
-      <div className="grid grid-cols-2  md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
-        {data?.trending_products?.map((product, ind) => (
-          <div key={ind}>
-            <ColumnCard productData={product} />
-          </div>
-        ))}
-      </div>
-    </div>
+    <main>
+      <CatalogListing
+        title="Trending Products"
+        subtitle="Most popular items frequently ordered by patients and customers"
+        items={catalogData?.items || []}
+        total={catalogData?.total || 0}
+        page={catalogData?.page || 1}
+        pages={catalogData?.pages || 1}
+        limit={catalogData?.limit || 24}
+        facets={catalogData?.facets || { categories: [], brands: [] }}
+      />
+    </main>
   );
 }

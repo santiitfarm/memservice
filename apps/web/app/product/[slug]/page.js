@@ -1,114 +1,179 @@
+import { notFound, permanentRedirect } from "next/navigation";
 import Image from "next/image";
-import { permanentRedirect } from "next/navigation";
-// import components
-import RelatedProducts from "@/app/components/relatedProducts/RelatedProducts";
-import DesInfoReviews from "../components/DesInfoReviews";
-import ShowProductDetails from "../components/ShowProductDetails";
+import Link from "next/link";
 import ShowProductImage from "../components/ShowProductImage";
+import ShowProductDetails from "../components/ShowProductDetails";
+import DesInfoReviews from "../components/DesInfoReviews";
+import RelatedProducts from "@/app/components/relatedProducts/RelatedProducts";
+import { getSiteBootstrap } from "@/lib/cms";
 
-export async function generateMetadata({ params }, parent) {
+export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const response = await fetch(
-    `${process.env.API_URL}/api/shop/${slug}`
-  );
-  const data = await response.json();
-  const productData = data?.product;
-  // optionally access and extend (rather than replace) parent metadata
-  const previousImages = (await parent).openGraph?.images || [];
-  return {
-    title: productData?.name || "Product",
-    description: productData?.short_description || "",
-    url: `${process.env.NEXT_PUBLIC_URL}/product/${data?.slug || slug}`,
-    type: "product",
-    openGraph: {
-      images: [
-        {
-          url: productData?.images?.[0] || "",
-          width: 1200,
-          height: 630,
-          alt: productData?.name || "Product Image",
-        },
-        ...previousImages,
-      ],
-    },
-  };
+  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  try {
+    const res = await fetch(`${apiUrl}/api/shop/${slug}`, { next: { revalidate: 60 } });
+    if (!res.ok) return { title: "Product Not Found | Mem Service" };
+
+    const data = await res.json();
+    const product = data?.product;
+    if (!product) return { title: "Product Not Found | Mem Service" };
+
+    return {
+      title: `${product.name} | Mem Service`,
+      description:
+        product.short_description ||
+        `Buy authentic ${product.name} online in Bangladesh. Fast home delivery and best prices at Mem Service.`,
+      openGraph: {
+        title: product.name,
+        description: product.short_description || "",
+        images: product.images?.[0] ? [{ url: product.images[0] }] : [],
+      },
+    };
+  } catch (err) {
+    return { title: "Mem Service - Online Pharmacy" };
+  }
 }
 
-async function SingleProductPage({ params }) {
+export default async function ProductDetailPage({ params }) {
   const { slug } = await params;
+  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-  const response = await fetch(
-    `${process.env.API_URL}/api/shop/${slug}`
-  );
-  const data = await response.json();
+  // Fetch product data and site bootstrap in parallel
+  const [productRes, bootstrap] = await Promise.all([
+    fetch(`${apiUrl}/api/shop/${slug}`, { next: { revalidate: 60 } }),
+    getSiteBootstrap(),
+  ]);
+
+  if (!productRes.ok) {
+    notFound();
+  }
+
+  const data = await productRes.json();
+  const product = data?.product;
+
+  if (!product) {
+    notFound();
+  }
 
   // 301 Permanent Redirect if accessed by old MongoDB ObjectId and product has a slug
   if (data?.isObjectId && data?.slug && data.slug !== slug) {
     permanentRedirect(`/product/${data.slug}`);
   }
 
-  const productData = data?.product;
+  // Fetch related products
+  let relatedProducts = [];
+  try {
+    const relRes = await fetch(`${apiUrl}/api/relatedproducts?tags=medicine,tablets`, {
+      next: { revalidate: 120 },
+    });
+    if (relRes.ok) {
+      const relData = await relRes.json();
+      relatedProducts = relData?.related_products || [];
+    }
+  } catch (e) {}
 
-  const relatedProductResponse = await fetch(
-    `${process.env.API_URL}/api/relatedproducts?tags=medicine,tablets`
-  );
-  const relatedProductData = await relatedProductResponse.json();
-  const relatedProducts = relatedProductData?.related_products;
-
-  const additionalInfo = {
-    productType: productData?.products_type,
-    manufacturer: productData?.manufacturer_name,
-    mililiter: productData?.strength,
+  // JSON-LD structured data for Google Rich Results
+  const effectivePrice = product.discount_price > 0 ? product.discount_price : product.regular_price;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    image: product.images || [],
+    description: product.short_description || `${product.name} available at Mem Service`,
+    sku: product.sku || product._id,
+    brand: {
+      "@type": "Brand",
+      name: product.manufacturer_name || product.brand?.title || "Mem Service",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/product/${product.slug || product._id}`,
+      priceCurrency: "BDT",
+      price: effectivePrice,
+      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+    ...(product.reviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: product.avgRating || 5,
+            reviewCount: product.reviewCount || 1,
+          },
+        }
+      : {}),
   };
 
-  const bannerRes = await fetch(`${process.env.API_URL}/api/banner`);
-  const banner = await bannerRes.json();
-  const banners = banner?.banner;
-  const bannerData = banners.slice(5, 7);
+  const deliveryZones = bootstrap?.deliveryZones || [];
 
   return (
-    <main className="relative container mx-auto px-3 md:px-6 space-y-10 sm:mt-24 xl:mt-0">
-      <section className="w-full h-full flex flex-col md:flex-row gap-6 mb-12">
-        <div className="w-full md:w-[77%] h-full space-y-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Product Images */}
-            <div className="w-full md:w-[45%]">
-              <ShowProductImage data={productData?.images} />
-            </div>
-            {/* Show Product Details */}
-            <div className="w-full md:w-[55%]">
-              <ShowProductDetails product={productData} url={slug} />
-            </div>
+    <>
+      {/* JSON-LD Structured Metadata */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      <main className="container mx-auto px-3 lg:px-6 py-6 md:py-10">
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="mb-6 text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+          <Link href="/" className="hover:text-primary transition-colors">
+            Home
+          </Link>
+          <span>/</span>
+          <Link href="/shop" className="hover:text-primary transition-colors">
+            Shop
+          </Link>
+          {product.category?.categoryName && (
+            <>
+              <span>/</span>
+              <Link
+                href={`/shop?category=${encodeURIComponent(product.category.slug || product.category.categoryName)}`}
+                className="hover:text-primary transition-colors"
+              >
+                {product.category.categoryName}
+              </Link>
+            </>
+          )}
+          <span>/</span>
+          <span className="text-foreground font-semibold truncate max-w-xs">{product.name}</span>
+        </nav>
+
+        {/* Product Showcase: Gallery on Left (5 cols) & Details on Right (7 cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          <div className="lg:col-span-5 w-full">
+            <ShowProductImage data={product.images || []} />
           </div>
-          {/* Description, Additional Information, and Reviews */}
+
+          <div className="lg:col-span-7 w-full">
+            <ShowProductDetails product={product} deliveryZones={deliveryZones} />
+          </div>
+        </div>
+
+        {/* Product Tabs: Description, Specifications, and Reviews */}
+        <div className="mt-12">
           <DesInfoReviews
-            specificationsHtmlBangla={productData?.specificationsHtmlBangla}
-            specificationsHtml={productData?.specificationsHtml}
-            additionalInfo={additionalInfo}
-            productId={productData?._id}
-            slug={productData?.slug || slug}
+            specificationsHtml={product.specificationsHtml}
+            specificationsHtmlBangla={product.specificationsHtmlBangla}
+            additionalInfo={{
+              manufacturer: product.manufacturer_name,
+              productType: product.products_type,
+              mililiter: product.strength,
+            }}
+            productId={product._id}
+            slug={product.slug}
           />
         </div>
-        {/* Aside Banner */}
-        <div className="w-full md:w-[23%] space-y-6">
-          {bannerData.map((product) => (
-            <div key={product._id} className="w-full h-auto">
-              <Image
-                src={product?.image}
-                width={500}
-                height={500}
-                className="w-full h-auto rounded-md"
-                alt={product?.title || "Banner Image"}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* Related Products */}
-      <RelatedProducts relatedProducts={relatedProducts} />
-    </main>
+        {/* Related Products Rail */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16">
+            <RelatedProducts relatedProducts={relatedProducts} />
+          </div>
+        )}
+      </main>
+    </>
   );
 }
-
-export default SingleProductPage;

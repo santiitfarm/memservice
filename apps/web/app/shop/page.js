@@ -1,96 +1,46 @@
-import { MenuProvider } from "../context/menuContext";
-import FilterComponents from "./_components/FilterComponents";
-import Pagination from "./_components/Pagination";
-import Products from "./_components/Products";
-import ShopBanner from "./_components/ShopBanner";
-import ShopToolBar from "./_components/ShopToolBar";
+import CatalogListing from "./_components/CatalogListing";
 
-const ShopPage = async ({ searchParams }) => {
-  const response = await fetch(`${process.env.API_URL}/api/shop`);
-  const data = await response.json();
-  const productData = data?.products;
-
-  const { search, category, manufacturer, productType, sort, page } =
-    await searchParams;
-
-  const itemsPerPage = 5;
-  const currentPage = page ? parseInt(page) : 1;
-
-  const categories = category ? decodeURIComponent(category).split("|") : [];
-  const manufacturers = manufacturer
-    ? decodeURIComponent(manufacturer).split("|")
-    : [];
-  const productTypes = productType
-    ? decodeURIComponent(productType).split("|")
-    : [];
-
-  const filteredProducts = productData.filter((product) => {
-    const searchMatch = search
-      ? product.title.toLowerCase().includes(search.toLowerCase())
-      : true;
-
-    const categoryMatch =
-      categories.length > 0 ? categories.includes(product.category) : true;
-
-    const manufacturerMatch =
-      manufacturers.length > 0
-        ? manufacturers.includes(product.manufacturer_name)
-        : true;
-
-    const productTypeMatch =
-      productTypes.length > 0
-        ? productTypes.includes(product.product_type)
-        : true;
-
-    return (
-      searchMatch && categoryMatch && manufacturerMatch && productTypeMatch
-    );
-  });
-
-  const totalFilteredItems = filteredProducts.length;
-  const skip = (currentPage - 1) * itemsPerPage;
-  const paginatedProducts = filteredProducts.slice(skip, skip + itemsPerPage);
-
-  const totalPages = Math.ceil(totalFilteredItems / itemsPerPage);
-
-  const bannerRes = await fetch(`${process.env.API_URL}/api/banner`);
-  const banner = await bannerRes.json();
-  const banners = banner?.banner;
-
-  return (
-    <MenuProvider>
-      <main className="container mx-auto px-3 lg:px-6 flex gap-6 mt-6 lg:mt-20 xl:mt-6 relative">
-        <FilterComponents
-          filterCategories={productData}
-          filterManufacturers={productData}
-          filterProductTypes={productData}
-          categories={categories}
-          manufacturers={manufacturers}
-          productTypes={productTypes}
-        />
-
-        <div className="w-full h-full">
-          <ShopToolBar products={productData} />
-          <ShopBanner bannerData={banners} />
-          <Products
-            productData={paginatedProducts}
-            sort={sort}
-            categories={categories}
-            manufacturer={manufacturers}
-            productType={productTypes}
-          />
-          {totalPages > 1 && (
-            <Pagination
-              totalItems={totalFilteredItems}
-              itemsPerPage={itemsPerPage}
-              totalPages={totalPages}
-              currentPage={currentPage}
-            />
-          )}
-        </div>
-      </main>
-    </MenuProvider>
-  );
+export const metadata = {
+  title: "Shop Online Medicines & Health Products | Mem Service",
+  description:
+    "Browse authentic prescription medicines, OTC drugs, health devices, and wellness supplies at Mem Service Bangladesh.",
 };
 
-export default ShopPage;
+export default async function ShopPage({ searchParams }) {
+  const resolvedParams = await searchParams;
+  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  // Build query string forwarding all catalog filter params
+  const query = new URLSearchParams();
+  for (const [key, val] of Object.entries(resolvedParams || {})) {
+    if (val) query.set(key, String(val));
+  }
+  if (!query.has("limit")) query.set("limit", "24");
+
+  let catalogData = { items: [], total: 0, page: 1, pages: 1, limit: 24, facets: { categories: [], brands: [] } };
+  try {
+    const res = await fetch(`${apiUrl}/api/catalog/products?${query.toString()}`, {
+      next: { revalidate: 30 },
+    });
+    if (res.ok) {
+      catalogData = await res.json();
+    }
+  } catch (err) {
+    console.error("Shop page catalog fetch error:", err);
+  }
+
+  return (
+    <main>
+      <CatalogListing
+        title="All Products"
+        subtitle="Genuine prescription medicines, vitamins & personal healthcare products"
+        items={catalogData?.items || []}
+        total={catalogData?.total || 0}
+        page={catalogData?.page || 1}
+        pages={catalogData?.pages || 1}
+        limit={catalogData?.limit || 24}
+        facets={catalogData?.facets || { categories: [], brands: [] }}
+      />
+    </main>
+  );
+}
