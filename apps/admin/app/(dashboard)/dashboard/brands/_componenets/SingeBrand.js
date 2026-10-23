@@ -45,6 +45,9 @@ export default function SingeBrand({ brand, i }) {
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
         {brand?.title}
       </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80 font-mono">
+        {brand?.order ?? 0}
+      </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
         {brand?.category?.categoryName || "—"}
       </td>

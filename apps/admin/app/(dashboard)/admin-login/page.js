@@ -6,8 +6,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-background text-foreground">
       {/* Theme Toggle Top Right */}
-      <div className="absolute top-4 right-4 z-20">
-        <DarkMood isCollapsed={false} className="w-48" />
+      <div className="absolute top-5 right-5 z-20">
+        <DarkMood isCollapsed={false} className="shadow-md" />
       </div>
 
       <div className="w-full max-w-4xl grid lg:grid-cols-2 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">

@@ -7,6 +7,9 @@ import Category from "@/app/models/category-model";
 import { Brand } from "@/app/models/brand-model";
 import Testimonial from "@/app/models/Testimonial";
 import Department from "@/app/models/Department";
+import Review from "@/app/models/Review";
+import Product from "@/app/models/product-model";
+import { CustomerProfile } from "@/app/models/customer-profile-model";
 import { revalidateStorefront } from "@/lib/revalidate";
 
 export async function GET() {
@@ -21,6 +24,7 @@ export async function GET() {
       banners,
       testimonials,
       departments,
+      homeReviews,
     ] = await Promise.all([
       HomeLayout.findOne({ key: "home" }).lean(),
       Slider.find({ status: "active" }).sort({ order: 1, createdAt: -1 }).lean(),
@@ -31,7 +35,41 @@ export async function GET() {
       Banner.find({ status: "active" }).sort({ order: 1, createdAt: -1 }).lean(),
       Testimonial.find({ status: "active" }).sort({ order: 1, createdAt: -1 }).limit(8).lean(),
       Department.find({ status: "active" }).sort({ order: 1, name: 1 }).lean(),
+      Review.find({ status: "approved", showOnHome: true })
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .populate({
+          path: "customer",
+          model: CustomerProfile,
+          select: "customer_name email phone_number image",
+        })
+        .populate({
+          path: "product",
+          model: Product,
+          select: "name slug images regular_price discount_price",
+        })
+        .lean(),
     ]);
+
+    const mappedReviews = (homeReviews || []).map((r) => ({
+      _id: r._id,
+      name: r.customer?.customer_name || "Verified Customer",
+      role: "Verified Buyer",
+      avatar: r.customer?.image || "",
+      rating: r.rating || 5,
+      content: r.body,
+      title: r.title || "",
+      product: r.product
+        ? {
+            id: r.product._id,
+            name: r.product.name,
+            slug: r.product.slug,
+            image: Array.isArray(r.product.images) ? r.product.images[0] : "",
+          }
+        : null,
+      verifiedPurchase: r.verifiedPurchase ?? true,
+      createdAt: r.createdAt,
+    }));
 
     return NextResponse.json(
       {
@@ -42,7 +80,8 @@ export async function GET() {
           categories,
           brands,
           banners,
-          testimonials,
+          testimonials: mappedReviews.length > 0 ? mappedReviews : testimonials,
+          reviews: mappedReviews,
           departments,
         },
       },

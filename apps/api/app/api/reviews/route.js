@@ -82,17 +82,33 @@ export async function POST(request) {
       );
     }
 
-    // Check for verified purchase on delivered order
+    // Check for verified purchase on delivered order containing this product
     const deliveredOrder = await Order.findOne({
       customer: customerAuth.id,
       status: "delivered",
-      "items.id": product._id.toString(),
+      $or: [
+        { "items.id": product._id.toString() },
+        { "items._id": product._id },
+        { "items.id": String(product._id) },
+      ],
     })
       .select("_id")
       .lean();
 
-    const verifiedPurchase = Boolean(deliveredOrder);
-    const orderId = deliveredOrder ? deliveredOrder._id : null;
+    if (!deliveredOrder) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "VERIFIED_PURCHASE_REQUIRED",
+          message:
+            "Only verified buyers who have received this product can write a review. Your order must be delivered to submit feedback.",
+        },
+        { status: 403 }
+      );
+    }
+
+    const verifiedPurchase = true;
+    const orderId = deliveredOrder._id;
 
     const review = await Review.create({
       product: product._id,
@@ -104,6 +120,7 @@ export async function POST(request) {
       body: sanitizedBody,
       images: Array.isArray(images) ? images.slice(0, 5) : [],
       status: "pending",
+      showOnHome: false,
     });
 
     return NextResponse.json(
@@ -139,14 +156,24 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "all";
     const productId = searchParams.get("product");
+    const showOnHome = searchParams.get("showOnHome");
     const page = Math.max(1, parseInt(searchParams.get("page"), 10) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit"), 10) || 20));
     const skip = (page - 1) * limit;
 
     const filter = {};
-    if (status && status !== "all") {
+    if (status === "featured") {
+      filter.showOnHome = true;
+    } else if (status && status !== "all") {
       filter.status = status;
     }
+
+    if (showOnHome === "true") {
+      filter.showOnHome = true;
+    } else if (showOnHome === "false") {
+      filter.showOnHome = false;
+    }
+
     if (productId && mongoose.Types.ObjectId.isValid(productId)) {
       filter.product = productId;
     }

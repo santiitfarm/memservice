@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   RotateCcw,
   Search,
+  Sparkles,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -29,6 +30,7 @@ import {
 const REVIEW_TABS = [
   { id: "pending", label: "Pending Approval" },
   { id: "approved", label: "Approved Live" },
+  { id: "featured", label: "Featured on Homepage" },
   { id: "rejected", label: "Rejected" },
   { id: "all", label: "All Reviews" },
 ];
@@ -51,6 +53,20 @@ export default function ReviewsModerationPage() {
       toast.success(`Review ${newStatus} successfully!`);
     } catch (err) {
       toast.error(err?.data?.message || err?.message || "Failed to update review status");
+    }
+  };
+
+  const handleToggleHome = async (review) => {
+    try {
+      const nextVal = !review.showOnHome;
+      await updateStatus({ id: review._id, showOnHome: nextVal }).unwrap();
+      toast.success(
+        nextVal
+          ? "Review is now featured on the homepage!"
+          : "Review removed from homepage."
+      );
+    } catch (err) {
+      toast.error(err?.data?.message || err?.message || "Failed to update review homepage status");
     }
   };
 
@@ -205,6 +221,12 @@ export default function ReviewsModerationPage() {
                           </Badge>
                         )}
 
+                        {r.showOnHome && (
+                          <Badge className="gap-1 bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[11px] py-0 px-2 h-5 font-semibold">
+                            <Sparkles className="w-3 h-3 text-amber-500 fill-amber-500" /> Featured on Home
+                          </Badge>
+                        )}
+
                         <span className="text-xs text-muted-foreground">•</span>
                         <span className="text-xs text-muted-foreground">
                           {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ""}
@@ -252,7 +274,31 @@ export default function ReviewsModerationPage() {
                       </div>
 
                       {/* One-click Action Buttons */}
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                        <Button
+                          size="sm"
+                          variant={r.showOnHome ? "default" : "outline"}
+                          onClick={() => handleToggleHome(r)}
+                          disabled={isUpdating}
+                          className={`h-8 gap-1.5 text-xs font-semibold transition-all ${
+                            r.showOnHome
+                              ? "bg-amber-500 hover:bg-amber-600 text-white border-transparent shadow-sm"
+                              : "text-muted-foreground hover:text-foreground border-border hover:border-amber-400"
+                          }`}
+                          title={
+                            r.showOnHome
+                              ? "Click to remove from homepage slider"
+                              : "Click to feature this review on the homepage"
+                          }
+                        >
+                          <Sparkles
+                            className={`w-3.5 h-3.5 ${
+                              r.showOnHome ? "fill-white text-white" : "text-amber-500"
+                            }`}
+                          />
+                          {r.showOnHome ? "On Homepage" : "Feature on Home"}
+                        </Button>
+
                         {!isApproved && (
                           <Button
                             size="sm"

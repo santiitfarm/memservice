@@ -278,7 +278,7 @@ export default function NavSideBar({ setIsCollapsed, isCollapsed, isSmall }) {
 
       {/* Bottom Controls: Theme & Logout */}
       <div className="p-3 border-t border-border space-y-2 bg-card">
-        <DarkMood isCollapsed={isCollapsed} />
+        <DarkMood isCollapsed={isCollapsed} className="w-full" />
 
         {session?.user && (
           <button

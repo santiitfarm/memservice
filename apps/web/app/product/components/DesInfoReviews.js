@@ -112,6 +112,12 @@ export default function DesInfoReviews({
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 403 || data.code === "VERIFIED_PURCHASE_REQUIRED") {
+          throw new Error(
+            data.message ||
+              "Only customers who have purchased and received this product can submit a review."
+          );
+        }
         throw new Error(data.message || "Failed to submit review");
       }
 
@@ -336,9 +342,18 @@ export default function DesInfoReviews({
 
                 {/* Review Submit Form for Verified Buyers / Customers */}
                 <div className="rounded-2xl border border-border bg-muted/20 p-5 sm:p-6 space-y-4">
-                  <h4 className="font-bold text-sm sm:text-base text-foreground">
-                    Write a Review
-                  </h4>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <h4 className="font-bold text-sm sm:text-base text-foreground">
+                      Write a Review
+                    </h4>
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 w-fit">
+                      <CheckCircle size={12} /> Verified Buyers Only
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground">
+                    To maintain strict pharmaceutical integrity and trusted healthcare feedback, reviews can only be submitted by customers who have purchased and received this product.
+                  </p>
 
                   {session ? (
                     <form onSubmit={handleReviewSubmit} className="space-y-4">

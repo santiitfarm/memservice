@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import connectMongo from "../../../services/mongo";
-import { Slider } from "../../models/slider-model";
-
-import { v2 as cloudinary } from "cloudinary";
+import connectMongo from "@/services/mongo";
+import { Slider } from "@/app/models/slider-model";
 import Product from "@/app/models/product-model";
+import { v2 as cloudinary } from "cloudinary";
+import { revalidateStorefront } from "@/lib/revalidate";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -11,203 +11,272 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+async function uploadToCloudinary(file) {
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        {
+          folder: "sliders",
+          allowed_formats: ["jpg", "png", "jpeg", "webp", "avif"],
+        },
+        (error, result) => {
+          if (error) {
+            console.error("Cloudinary Upload Error:", error);
+            reject(error);
+          } else {
+            resolve(result.secure_url);
+          }
+        }
+      )
+      .end(buffer);
+  });
+}
+
+// GET all sliders
+export async function GET() {
+  try {
+    await connectMongo();
+    const sliders = await Slider.find()
+      .sort({ order: 1, createdAt: -1 })
+      .populate({
+        path: "productId",
+        model: Product,
+        select: "name model slug",
+      })
+      .lean();
+
+    return NextResponse.json(
+      {
+        success: true,
+        slider: sliders,
+        sliders,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("GET /api/slider error:", error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+// POST create slider
 export async function POST(req) {
   try {
     await connectMongo();
 
-    const data = await req.formData();
-    console.log(data);
+    const contentType = req.headers.get("content-type") || "";
+    let title = "Banner";
+    let link = "/shop";
+    let order = 0;
+    let status = "active";
+    let productId = null;
+    let description = "";
+    let imageUrl = "";
 
-    const title = data.get("title");
-    const description = data.get("description");
-    const regular_price = data.get("regular_price");
-    const discount_price = data.get("discount_price");
-    const productId = data.get("productId");
-    const file = data.get("file");
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      title = formData.get("title") || "Banner";
+      link = formData.get("link") || "/shop";
+      order = parseInt(formData.get("order") || "0", 10) || 0;
+      status = formData.get("status") || "active";
+      description = formData.get("description") || "";
+      productId = formData.get("productId") || null;
 
-    if (!file || !(file instanceof File)) {
+      const file = formData.get("file");
+      if (file && typeof file !== "string" && file.size > 0) {
+        imageUrl = await uploadToCloudinary(file);
+      } else if (formData.get("image")) {
+        imageUrl = formData.get("image");
+      }
+    } else {
+      const body = await req.json();
+      title = body.title || "Banner";
+      link = body.link || "/shop";
+      order = parseInt(body.order || "0", 10) || 0;
+      status = body.status || "active";
+      description = body.description || "";
+      productId = body.productId || null;
+      imageUrl = body.image || "";
+    }
+
+    if (!imageUrl) {
       return NextResponse.json(
-        { message: "File is required and must be a valid File object" },
+        { success: false, message: "Banner image is required" },
         { status: 400 }
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const sliderObj = {
+      image: imageUrl,
+      title,
+      link: link.trim(),
+      order,
+      status,
+      description,
+      placement: "home_main",
+    };
 
-    return new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          {
-            folder: "sliders",
-            allowed_formats: ["jpg", "png", "jpeg", "webp"],
-          },
-          async (error, result) => {
-            if (error) {
-              console.error("Cloudinary Upload Error:", error);
-              resolve(
-                NextResponse.json(
-                  {
-                    message: "Failed to upload image to Cloudinary",
-                    error: error.message,
-                  },
-                  { status: 400 }
-                )
-              );
-            } else {
-              try {
-                const sliderObj = {
-                  image: result.secure_url,
-                  title,
-                  description,
-                  regular_price,
-                  discount_price,
-                  productId,
-                };
+    if (productId) {
+      sliderObj.productId = productId;
+    }
 
-                const slider = await Slider.create(sliderObj);
+    const slider = await Slider.create(sliderObj);
 
-                resolve(
-                  NextResponse.json(
-                    {
-                      slider,
-                      message: "Successfully created slider",
-                      cloudinaryResponse: result,
-                    },
-                    { status: 201 }
-                  )
-                );
-              } catch (dbError) {
-                console.error("Database Error:", dbError);
-                resolve(
-                  NextResponse.json(
-                    {
-                      message: "Error saving slider to database",
-                      error: dbError.message,
-                    },
-                    { status: 500 }
-                  )
-                );
-              }
-            }
-          }
-        )
-        .end(buffer);
-    });
-  } catch (error) {
-    console.error("Unexpected Error:", error);
+    // Revalidate storefront cache immediately
+    await Promise.all([
+      revalidateStorefront({ tag: "cms-sliders", path: "/" }),
+      revalidateStorefront({ tag: "cms-home", path: "/" }),
+    ]);
+
     return NextResponse.json(
-      { message: "Unexpected server error", error: error.message },
+      {
+        success: true,
+        message: "Successfully created slider",
+        slider,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("POST /api/slider error:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to create slider" },
       { status: 500 }
     );
   }
 }
 
+// PUT update slider
 export async function PUT(req) {
   try {
     await connectMongo();
 
-    const formData = await req.formData();
-    const sliderId = formData.get("id");
-    const title = formData.get("title");
-    const description = formData.get("description");
-    const regular_price = formData.get("regular_price");
-    const discount_price = formData.get("discount_price");
+    const contentType = req.headers.get("content-type") || "";
+    let sliderId = "";
+    let title;
+    let link;
+    let order;
+    let status;
+    let imageUrl = "";
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      sliderId = formData.get("id") || formData.get("sliderId");
+      if (formData.has("title")) title = formData.get("title");
+      if (formData.has("link")) link = formData.get("link");
+      if (formData.has("order")) order = parseInt(formData.get("order"), 10);
+      if (formData.has("status")) status = formData.get("status");
+
+      const file = formData.get("file");
+      if (file && typeof file !== "string" && file.size > 0) {
+        imageUrl = await uploadToCloudinary(file);
+      } else if (formData.get("image")) {
+        imageUrl = formData.get("image");
+      }
+    } else {
+      const body = await req.json();
+      sliderId = body.id || body.sliderId;
+      if (body.title !== undefined) title = body.title;
+      if (body.link !== undefined) link = body.link;
+      if (body.order !== undefined) order = parseInt(body.order, 10);
+      if (body.status !== undefined) status = body.status;
+      if (body.image) imageUrl = body.image;
+    }
 
     if (!sliderId) {
       return NextResponse.json(
-        { message: "Slider ID is required" },
+        { success: false, message: "Slider ID is required" },
         { status: 400 }
       );
     }
 
-    let secure_url = "";
-    if (formData.has("file")) {
-      const file = formData.get("file");
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (link !== undefined) updateData.link = link.trim();
+    if (order !== undefined && !isNaN(order)) updateData.order = order;
+    if (status !== undefined) updateData.status = status;
+    if (imageUrl) updateData.image = imageUrl;
 
-      if (typeof file !== "string") {
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", file);
+    const updatedSlider = await Slider.findByIdAndUpdate(
+      sliderId,
+      { $set: updateData },
+      { new: true }
+    );
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL_DEV}/api/cloudinary`,
-          {
-            method: "POST",
-            body: uploadFormData,
-          }
-        );
-
-        const responseBody = await response.json();
-
-        if (response.ok) {
-          secure_url = responseBody.secure_url;
-        } else {
-          return NextResponse.json(
-            { message: "Failed to upload image to Cloudinary" },
-            { status: 400 }
-          );
-        }
-      } else {
-        secure_url = file;
-      }
-    }
-
-    if (secure_url) {
-      const sliderObj = {
-        image: secure_url,
-        title,
-        description,
-        regular_price,
-        discount_price,
-      };
-
-      const slider = await Slider.findByIdAndUpdate(sliderId, sliderObj);
+    if (!updatedSlider) {
       return NextResponse.json(
-        { message: "Successfully created slider", slider },
-        { status: 201 }
-      );
-    }
-
-    if (!slider) {
-      return NextResponse.json(
-        { message: "Slider not found" },
+        { success: false, message: "Slider not found" },
         { status: 404 }
       );
     }
 
+    // Revalidate storefront cache immediately
+    await Promise.all([
+      revalidateStorefront({ tag: "cms-sliders", path: "/" }),
+      revalidateStorefront({ tag: "cms-home", path: "/" }),
+    ]);
+
     return NextResponse.json(
-      { slider, message: "Successfully updated slider" },
+      {
+        success: true,
+        message: "Successfully updated slider",
+        slider: updatedSlider,
+      },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error in PUT request:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("PUT /api/slider error:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to update slider" },
+      { status: 500 }
+    );
   }
 }
 
-export async function GET(req) {
-  await connectMongo();
-  try {
-    const slider = await Slider.find().populate({
-      path: "productId",
-      model: Product,
-      select: "name model",
-    });
-    return NextResponse.json({ slider }, { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
-
+// DELETE slider
 export async function DELETE(req) {
   try {
     await connectMongo();
-    const { sliderId } = await req.json();
-    console.log(sliderId);
+
+    let sliderId = "";
+    try {
+      const body = await req.json();
+      sliderId = body.sliderId || body.id;
+    } catch (e) {
+      const { searchParams } = new URL(req.url);
+      sliderId = searchParams.get("sliderId") || searchParams.get("id");
+    }
+
+    if (!sliderId) {
+      return NextResponse.json(
+        { success: false, message: "Slider ID is required" },
+        { status: 400 }
+      );
+    }
+
     const slider = await Slider.findByIdAndDelete(sliderId);
-    return NextResponse.json({ slider }, { status: 200 });
+
+    // Revalidate storefront cache immediately
+    await Promise.all([
+      revalidateStorefront({ tag: "cms-sliders", path: "/" }),
+      revalidateStorefront({ tag: "cms-home", path: "/" }),
+    ]);
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Successfully deleted slider",
+        slider,
+      },
+      { status: 200 }
+    );
   } catch (error) {
-    console.log(error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("DELETE /api/slider error:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to delete slider" },
+      { status: 500 }
+    );
   }
 }

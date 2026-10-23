@@ -47,8 +47,8 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-background text-foreground relative">
       {/* Theme Toggle Top Right */}
-      <div className="absolute top-4 right-4 z-20">
-        <DarkMood isCollapsed={false} className="w-48" />
+      <div className="absolute top-5 right-5 z-20">
+        <DarkMood isCollapsed={false} className="shadow-md" />
       </div>
 
       <div className="max-w-md w-full rounded-2xl border border-border bg-card shadow-2xl p-6 sm:p-8 relative overflow-hidden">

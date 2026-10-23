@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { Sun, Moon, Laptop } from "lucide-react";
 
 export default function ThemeToggle({ className = "", compact = false }) {
-  const [theme, setTheme] = useState("system");
+  const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem("theme") || "system";
+    const stored = localStorage.getItem("theme") || "light";
     setTheme(stored);
   }, []);
 

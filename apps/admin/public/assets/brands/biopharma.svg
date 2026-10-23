@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" width="200" height="120">
+  <g>
+    <!-- Top red icon -->
+    <rect x="94" y="24" width="12" height="16" rx="2" fill="#E53935"/>
+    <circle cx="100" cy="32" r="4" fill="#ffffff"/>
+    <circle cx="100" cy="32" r="2.5" fill="#00897B"/>
+    <!-- BIOPHARMA text -->
+    <text x="100" y="60" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="900" fill="#00796B" text-anchor="middle" letter-spacing="1.2">BIOPHARMA</text>
+    <line x1="68" y1="67" x2="132" y2="67" stroke="#9E9E9E" stroke-width="0.8"/>
+    <!-- LIMITED text -->
+    <text x="100" y="78" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="700" fill="#757575" text-anchor="middle" letter-spacing="3">LIMITED</text>
+  </g>
+</svg>

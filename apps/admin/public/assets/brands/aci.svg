@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" width="200" height="120">
+  <g fill="none" fill-rule="evenodd">
+    <!-- Green circular emblem -->
+    <circle cx="100" cy="55" r="48" fill="#00965e"/>
+    <!-- ACI text -->
+    <text x="100" y="55" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="1">ACI</text>
+    <!-- Wave lines beneath ACI -->
+    <path d="M68 66 Q84 60 100 66 T132 66" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M72 74 Q86 68 100 74 T128 74" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

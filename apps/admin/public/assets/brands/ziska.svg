@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" width="200" height="120">
+  <g>
+    <!-- Top blue strip -->
+    <rect x="35" y="30" width="130" height="6" fill="#1A237E" rx="1"/>
+    <!-- Blue main block -->
+    <rect x="35" y="40" width="130" height="42" fill="#1A237E" rx="3"/>
+    <!-- ZISKA text -->
+    <text x="100" y="58" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="3">ZISKA</text>
+    <!-- PHARMA text -->
+    <text x="100" y="75" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="2">PHARMA</text>
+  </g>
+</svg>

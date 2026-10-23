@@ -2,72 +2,99 @@ import { Brand } from "@/app/models/brand-model";
 import Category from "@/app/models/category-model";
 import Product from "@/app/models/product-model";
 import { cloudinary } from "@/lib/utils";
-import { dbConnect } from "@/utils/mongo";
+import connectMongo from "@/services/mongo";
+import { revalidateStorefront } from "@/lib/revalidate";
 import { NextResponse } from "next/server";
+
+function slugify(text = "") {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function uploadBrandLogo(file) {
+  const fileBuffer = await file.arrayBuffer();
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        {
+          folder: "brands",
+          resource_type: "auto",
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result?.secure_url);
+        }
+      )
+      .end(Buffer.from(fileBuffer));
+  });
+}
 
 export async function POST(req) {
   try {
-    // Connect to database
-    await dbConnect();
+    await connectMongo();
 
-    // Parse form data
-    const formData = await req.formData();
-    const title = formData.get("title");
-    const category = formData.get("category");
-    const status = formData.get("status");
-    const file = formData.get("file");
+    const contentType = req.headers.get("content-type") || "";
+    let title = "";
+    let category = null;
+    let status = "active";
+    let order = 0;
+    let logoUrl = "";
 
-    // Validate file
-    if (!file) {
-      return NextResponse.json(
-        { message: "File is required" },
-        { status: 400 }
-      );
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      title = formData.get("title") || "";
+      category = formData.get("category") || null;
+      status = formData.get("status") || "active";
+      order = parseInt(formData.get("order") || "0", 10) || 0;
+
+      const file = formData.get("file");
+      if (file && typeof file !== "string" && file.size > 0) {
+        logoUrl = await uploadBrandLogo(file);
+      } else if (formData.get("logo")) {
+        logoUrl = formData.get("logo");
+      }
+    } else {
+      const body = await req.json();
+      title = body.title || "";
+      category = body.category || null;
+      status = body.status || "active";
+      order = parseInt(body.order || "0", 10) || 0;
+      logoUrl = body.logo || "";
     }
 
-    // Convert file to buffer
-    const fileBuffer = await file.arrayBuffer();
-
-    // Upload to Cloudinary
-    const cloudinaryResponse = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          {
-            resource_type: "auto",
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        )
-        .end(Buffer.from(fileBuffer));
-    });
-
-    // Check Cloudinary upload result
-    if (!cloudinaryResponse?.secure_url) {
-      return NextResponse.json(
-        { message: "Failed to upload logo" },
-        { status: 400 }
-      );
+    if (!title.trim()) {
+      return NextResponse.json({ message: "Brand title is required" }, { status: 400 });
     }
 
-    // Create brand in database
-    const brand = await Brand.create({
-      logo: cloudinaryResponse.secure_url,
-      title,
-      category,
+    const slug = slugify(title);
+
+    const brandData = {
+      title: title.trim(),
+      slug,
       status,
-    });
+      order,
+    };
+
+    if (logoUrl) brandData.logo = logoUrl;
+    if (category) brandData.category = category;
+
+    const brand = await Brand.create(brandData);
+
+    await revalidateStorefront({ tag: "cms-home", path: "/" });
 
     return NextResponse.json(
-      { brand, message: "Successfully created brand" },
+      { brand, success: true, message: "Successfully created brand" },
       { status: 201 }
     );
   } catch (error) {
     console.error("Error in brand creation:", error);
     return NextResponse.json(
       {
-        message: "Internal server error",
+        message: error.message || "Internal server error",
         error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
@@ -77,132 +104,106 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
-    // get search parameters
+    await connectMongo();
     const searchParams = req.nextUrl.searchParams;
     const category = searchParams.get("category");
 
-    await dbConnect();
+    const query = {};
     if (category) {
-      const brands = await Brand.find({
-        category: category.toLowerCase(),
-      }).populate({
-        path: "product_name",
-        model: Product,
-        select: "product_name",
-      });
-      return NextResponse.json({ brands }, { status: 200 });
+      query.category = category.toLowerCase();
     }
 
-    const brands = await Brand.find().populate({
-      path: "category",
-      model: Category,
-      select: "categoryName",
-    });
-    return NextResponse.json({ brands }, { status: 200 });
+    const brands = await Brand.find(query)
+      .sort({ order: 1, createdAt: 1 })
+      .populate({
+        path: "category",
+        model: Category,
+        select: "categoryName",
+      })
+      .lean();
+
+    return NextResponse.json({ success: true, brands }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
 export async function PUT(req) {
   try {
-    await dbConnect();
+    await connectMongo();
 
-    const formData = await req.formData();
-    const title = formData.get("title");
-    const category = formData.get("category");
-    const status = formData.get("status");
-    const brandId = formData.get("id");
+    const contentType = req.headers.get("content-type") || "";
+    let brandId = "";
+    let title;
+    let category;
+    let status;
+    let order;
+    let logoUrl = "";
 
-    if (!brandId) {
-      return NextResponse.json(
-        { message: "Brand ID is required" },
-        { status: 400 }
-      );
-    }
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      brandId = formData.get("id") || formData.get("brandId");
+      if (formData.has("title")) title = formData.get("title");
+      if (formData.has("category")) category = formData.get("category");
+      if (formData.has("status")) status = formData.get("status");
+      if (formData.has("order")) order = parseInt(formData.get("order"), 10);
 
-    let secure_url = "";
-    const file = formData.get("file");
-
-    if (!file) {
-      return NextResponse.json(
-        { message: "File is required" },
-        { status: 400 }
-      );
-    }
-
-    // Check if the file is a Blob/File or a string
-    if (typeof file === "object") {
-      const fileBuffer = await file.arrayBuffer();
-
-      // Upload file to Cloudinary
-      const uploadResponse = await new Promise((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            {
-              resource_type: "auto", // Automatically detect file type
-            },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          )
-          .end(Buffer.from(fileBuffer));
-      });
-
-      secure_url = uploadResponse?.secure_url;
-
-      if (!secure_url) {
-        return NextResponse.json(
-          { message: "Failed to upload file to Cloudinary" },
-          { status: 400 }
-        );
+      const file = formData.get("file");
+      if (file && typeof file !== "string" && file.size > 0) {
+        logoUrl = await uploadBrandLogo(file);
+      } else if (formData.get("logo")) {
+        logoUrl = formData.get("logo");
       }
     } else {
-      secure_url = file; // Assume it's a valid URL
+      const body = await req.json();
+      brandId = body.id || body.brandId;
+      if (body.title !== undefined) title = body.title;
+      if (body.category !== undefined) category = body.category;
+      if (body.status !== undefined) status = body.status;
+      if (body.order !== undefined) order = parseInt(body.order, 10);
+      if (body.logo) logoUrl = body.logo;
     }
 
-    // Prepare the update object
-    const brandObj = {
-      logo: secure_url,
-      title,
-      category,
-      status,
-    };
-
-    // Update the brand in the database
-    const brand = await Brand.findByIdAndUpdate(brandId, brandObj, {
-      new: true, // Return the updated document
-      runValidators: true, // Ensure validations are run
-    });
-
-    if (!brand) {
-      return NextResponse.json(
-        { message: "Brand not found or failed to update" },
-        { status: 404 }
-      );
+    if (!brandId) {
+      return NextResponse.json({ message: "Brand ID is required" }, { status: 400 });
     }
+
+    const existingBrand = await Brand.findById(brandId);
+    if (!existingBrand) {
+      return NextResponse.json({ message: "Brand not found" }, { status: 404 });
+    }
+
+    const updateObj = {};
+    if (title !== undefined && title.trim()) {
+      updateObj.title = title.trim();
+      updateObj.slug = slugify(title);
+    }
+    if (category !== undefined) updateObj.category = category || null;
+    if (status !== undefined) updateObj.status = status;
+    if (order !== undefined && !isNaN(order)) updateObj.order = order;
+    if (logoUrl) updateObj.logo = logoUrl;
+
+    const brand = await Brand.findByIdAndUpdate(brandId, { $set: updateObj }, { new: true });
+
+    await revalidateStorefront({ tag: "cms-home", path: "/" });
 
     return NextResponse.json(
-      { message: "Successfully updated brand", brand },
+      { success: true, message: "Successfully updated brand", brand },
       { status: 200 }
     );
   } catch (error) {
     console.error("Error in PUT request:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
 
 export async function DELETE(req) {
   try {
-    await dbConnect();
+    await connectMongo();
     const body = await req.json().catch(() => ({}));
     const brandId = body.brandId || body.id;
     if (!brandId) {
-      return NextResponse.json(
-        { message: "Brand ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "Brand ID is required" }, { status: 400 });
     }
 
     const productCount = await Product.countDocuments({
@@ -220,6 +221,9 @@ export async function DELETE(req) {
     }
 
     const brand = await Brand.findOneAndDelete({ _id: brandId });
+
+    await revalidateStorefront({ tag: "cms-home", path: "/" });
+
     return NextResponse.json(
       { success: true, message: "Brand deleted successfully", brand },
       { status: 200 }

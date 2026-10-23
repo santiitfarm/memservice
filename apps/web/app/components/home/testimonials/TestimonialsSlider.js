@@ -1,8 +1,10 @@
 "use client";
 
-import { Star, CheckCircle, Quote } from "lucide-react";
+import { Star, CheckCircle, Quote, ExternalLink } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
+import Link from "next/link";
+import Image from "next/image";
 import "swiper/css";
 import "swiper/css/pagination";
 
@@ -77,6 +79,8 @@ export default function TestimonialsSlider({ testimonials = [] }) {
           const name = item.name || item.author || "Customer";
           const quote = item.content || item.comment || item.quote || "";
           const location = item.location || item.city || "Bangladesh";
+          const avatar = item.avatar || "";
+          const product = item.product || null;
 
           return (
             <SwiperSlide key={item._id || idx} className="h-auto">
@@ -89,7 +93,11 @@ export default function TestimonialsSlider({ testimonials = [] }) {
                         <Star
                           key={i}
                           size={15}
-                          className={i < rating ? "fill-amber-500 text-amber-500" : "text-muted-foreground/30"}
+                          className={
+                            i < rating
+                              ? "fill-amber-500 text-amber-500"
+                              : "text-muted-foreground/30"
+                          }
                         />
                       ))}
                     </div>
@@ -97,21 +105,69 @@ export default function TestimonialsSlider({ testimonials = [] }) {
                     <Quote className="text-primary/30 w-6 h-6" />
                   </div>
 
-                  <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground italic mb-6">
+                  {item.title && (
+                    <h4 className="font-bold text-xs sm:text-sm text-foreground mb-1.5">
+                      {item.title}
+                    </h4>
+                  )}
+
+                  <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground italic mb-4">
                     &ldquo;{quote}&rdquo;
                   </p>
+
+                  {/* Reviewed product chip */}
+                  {product && (
+                    <Link
+                      href={`/product/${product.slug || product.id}`}
+                      className="inline-flex items-center gap-2 p-1.5 pr-3 rounded-xl bg-muted/40 hover:bg-muted border border-border/60 transition-colors text-xs text-foreground group mb-4 max-w-full"
+                    >
+                      {product.image ? (
+                        <Image
+                          src={product.image}
+                          alt={product.name || "Product"}
+                          width={28}
+                          height={28}
+                          className="w-7 h-7 rounded-lg object-contain bg-background border border-border/50 shrink-0"
+                        />
+                      ) : null}
+                      <span className="truncate max-w-[190px] font-medium text-[11px] group-hover:text-primary transition-colors">
+                        {product.name}
+                      </span>
+                      <ExternalLink
+                        size={11}
+                        className="text-muted-foreground group-hover:text-primary shrink-0 ml-auto"
+                      />
+                    </Link>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3 pt-4 border-t border-border/60">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm">
-                    {name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="text-xs sm:text-sm font-semibold text-foreground">{name}</h4>
-                      <CheckCircle size={13} className="text-emerald-500 fill-emerald-500/20" />
+                  {avatar ? (
+                    <Image
+                      src={avatar}
+                      alt={name}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-full object-cover border border-border"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm shrink-0">
+                      {name.charAt(0).toUpperCase()}
                     </div>
-                    <p className="text-[11px] text-muted-foreground">{location}</p>
+                  )}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs sm:text-sm font-semibold text-foreground truncate">
+                        {name}
+                      </h4>
+                      <CheckCircle
+                        size={13}
+                        className="text-emerald-500 fill-emerald-500/20 shrink-0"
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {item.role || "Verified Buyer"} {location ? `• ${location}` : ""}
+                    </p>
                   </div>
                 </div>
               </div>

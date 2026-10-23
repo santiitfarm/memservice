@@ -1,4 +1,5 @@
 "use client";
+
 import {
   useAddBrandMutation,
   useUpdateBrandMutation,
@@ -16,7 +17,7 @@ const BrandForm = ({ brand, isEdit, setShowForm }) => {
     addBrand,
     { isLoading: addLoading, isSuccess: addSuccess, isError: addError },
   ] = useAddBrandMutation();
-  const { data } = useFetchCategoriesQuery();
+  const { data: categoryData } = useFetchCategoriesQuery();
   const [
     updateBrand,
     {
@@ -25,6 +26,7 @@ const BrandForm = ({ brand, isEdit, setShowForm }) => {
       isError: updateError,
     },
   ] = useUpdateBrandMutation();
+
   const {
     register,
     handleSubmit,
@@ -34,11 +36,13 @@ const BrandForm = ({ brand, isEdit, setShowForm }) => {
     defaultValues: {
       title: brand?.title || "",
       logo: brand?.logo || null,
-      category: brand?.category,
+      category: brand?.category?._id || brand?.category || "",
       status: brand?.status || "active",
+      order: brand?.order ?? 0,
     },
   });
-  const [logoPreview, setLogoPreview] = useState(brand?.logo);
+
+  const [logoPreview, setLogoPreview] = useState(brand?.logo || null);
 
   useEffect(() => {
     if (addSuccess) {
@@ -51,29 +55,34 @@ const BrandForm = ({ brand, isEdit, setShowForm }) => {
 
     if (addError) {
       toast.error(
-        `Failed to add brand: ${addError.message || "Unknown error occurred"}`
+        `Failed to add brand: ${addError?.data?.message || addError.message || "Unknown error occurred"}`
       );
     } else if (updateError) {
       toast.error(
         `Failed to update brand: ${
-          updateError.message || "Unknown error occurred"
+          updateError?.data?.message || updateError.message || "Unknown error occurred"
         }`
       );
     }
-  }, [addSuccess, updateSuccess, addError, updateError]);
+  }, [addSuccess, updateSuccess, addError, updateError, setShowForm]);
 
   const onSubmit = async (data) => {
     const formData = new FormData();
-    formData.append("title", data.title);
-    formData.append("category", data.category);
+    formData.append("title", data.title.trim());
     formData.append("status", data.status);
+    formData.append("order", String(data.order ?? 0));
+    if (data.category) {
+      formData.append("category", data.category);
+    }
 
-    if (data.logo) {
-      if (data.logo.size > 2000000) {
-        toast.error("File size should be less than 2MB.");
+    if (data.logo && typeof data.logo === "object") {
+      if (data.logo.size > 5 * 1024 * 1024) {
+        toast.error("File size should be less than 5MB.");
         return;
       }
       formData.append("file", data.logo);
+    } else if (brand?.logo) {
+      formData.append("logo", brand.logo);
     }
 
     if (isEdit) {
@@ -85,9 +94,10 @@ const BrandForm = ({ brand, isEdit, setShowForm }) => {
   };
 
   const handleLogoChange = (e) => {
-    const file = e.target.files[0];
-    if (file.size > 2000000) {
-      toast.error("File size should be less than 2MB.");
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB.");
       return;
     }
     setLogoPreview(URL.createObjectURL(file));
@@ -103,25 +113,25 @@ const BrandForm = ({ brand, isEdit, setShowForm }) => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 p-10 text-left rounded-md min-w-[30rem] xs:min-w-full dark:text-gray-400"
+      className="space-y-4 p-6 sm:p-8 text-left rounded-xl max-w-lg w-full dark:text-gray-300"
     >
       {/* Title Input */}
       <div>
         <label
           htmlFor="title"
-          className="block text-sm font-bold text-gray-700"
+          className="block text-sm font-bold text-gray-700 dark:text-gray-300"
         >
-          Title
+          Brand Name <span className="text-red-500">*</span>
         </label>
         <input
           id="title"
           type="text"
-          placeholder="Apple"
-          {...register("title", { required: "Title is required" })}
-          className="mt-1 h-8 px-4 lowercase w-full border border-gray-300 rounded-md shadow-sm bg-inherit placeholder:text-gray-600 dark:placeholder:text-gray-500 sm:text-sm"
+          placeholder="e.g. Square Toiletries Ltd."
+          {...register("title", { required: "Brand name is required" })}
+          className="mt-1 h-9 px-3.5 w-full border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
         />
         {errors.title && (
-          <span className="text-red-500">{errors.title.message}</span>
+          <span className="text-red-500 text-xs mt-1 block">{errors.title.message}</span>
         )}
       </div>
 
@@ -129,99 +139,131 @@ const BrandForm = ({ brand, isEdit, setShowForm }) => {
       <div>
         <label
           htmlFor="logo"
-          className="block text-sm font-bold text-gray-700 "
+          className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1"
         >
-          Logo
+          Brand Logo Image
         </label>
         <div className="flex items-center justify-center">
           <label
             htmlFor="logo-input"
-            className="relative border  overflow-hidden border-dashed border-gray-600 dark:text-gray-400 px-4 py-2 rounded-full cursor-pointer w-48 h-48 text-sm flex items-center justify-center flex-col gap-2"
+            className="relative border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-primary px-4 py-3 rounded-xl cursor-pointer w-full h-36 flex items-center justify-center flex-col gap-2 bg-gray-50/50 dark:bg-gray-800/40 transition overflow-hidden"
           >
-            <BiCloudUpload className="text-3xl" /> Upload Logo
-            {logoPreview && (
-              <div className="absolute top-0 left-0 right-0 bg-black rounded-full">
+            {logoPreview ? (
+              <div className="relative w-full h-full flex items-center justify-center group">
                 <Image
                   src={logoPreview}
                   alt="Logo Preview"
-                  className="object-fill w-48 h-48 rounded-full opacity-40"
-                  width={150}
-                  height={150}
+                  className="max-h-24 max-w-full object-contain p-2"
+                  width={180}
+                  height={80}
                 />
                 <button
+                  type="button"
                   onClick={handleRemoveLogo}
-                  className="absolute top-20 right-[4.5rem] ring-1 rounded-full bg-red-500 hover:bg-red-600 p-1"
-                  aria-label="Remove Logo"
+                  className="absolute top-2 right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full shadow transition"
+                  title="Remove Logo"
                 >
-                  <AiFillCloseCircle className="text-4xl" />
+                  <AiFillCloseCircle className="text-xl" />
                 </button>
               </div>
+            ) : (
+              <>
+                <BiCloudUpload className="text-3xl text-gray-400" />
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                  Click or drag brand logo
+                </span>
+                <span className="text-[11px] text-gray-400">
+                  SVG, PNG, JPG or WEBP (Max 5MB)
+                </span>
+              </>
             )}
           </label>
           <input
             id="logo-input"
             type="file"
-            {...register("logo")}
+            accept="image/*"
             className="hidden"
             onChange={handleLogoChange}
           />
         </div>
       </div>
 
-      {/* Category Input */}
+      {/* Row: Order and Status */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label
+            htmlFor="order"
+            className="block text-sm font-bold text-gray-700 dark:text-gray-300"
+          >
+            Display Serial (Order)
+          </label>
+          <input
+            id="order"
+            type="number"
+            min="0"
+            placeholder="1"
+            {...register("order", { valueAsNumber: true })}
+            className="mt-1 h-9 px-3 w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="status"
+            className="block text-sm font-bold text-gray-700 dark:text-gray-300"
+          >
+            Status
+          </label>
+          <select
+            id="status"
+            {...register("status")}
+            className="mt-1 h-9 px-3 w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+          >
+            <option value="active">Active (Visible)</option>
+            <option value="inactive">Inactive (Hidden)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Optional Category */}
       <div>
         <label
           htmlFor="category"
-          className="block text-sm font-bold text-gray-700"
+          className="block text-sm font-semibold text-gray-600 dark:text-gray-400"
         >
-          Category
+          Category (Optional)
         </label>
         <select
           id="category"
           {...register("category")}
-          className="mt-1 h-8 px-4 w-full border border-gray-300 bg-inherit rounded-md shadow-sm sm:text-sm"
-          defaultValue={"smartphone"}
-          // disabled
+          className="mt-1 h-9 px-3 w-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
         >
-          <option value="">select category</option>
-          {data?.categories?.map((category) => (
-            <option
-              key={category._id}
-              value={category?._id}
-            >
-              {category.categoryName}
+          <option value="">Select Category (Optional)</option>
+          {categoryData?.categories?.map((cat) => (
+            <option key={cat._id} value={cat._id}>
+              {cat.categoryName}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Status Select */}
-      <div>
-        <label
-          htmlFor="status"
-          className="block text-sm font-bold text-gray-700"
+      {/* Action Buttons */}
+      <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+        <button
+          type="button"
+          onClick={setShowForm}
+          className="px-4 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
         >
-          Status
-        </label>
-        <select
-          id="status"
-          {...register("status")}
-          defaultValue="active"
-          className="mt-1 h-8 px-4 w-full border border-gray-300 bg-inherit rounded-md shadow-sm sm:text-sm"
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={addLoading || updateLoading}
+          className="px-5 py-2 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 shadow-sm disabled:opacity-50 transition"
         >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+          {addLoading || updateLoading ? "Saving..." : isEdit ? "Update Brand" : "Add Brand"}
+        </button>
       </div>
-
-      {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={Object.keys(errors).length > 0 || addLoading || updateLoading}
-        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white dark:text-gray-400 bg-indigo-600 dark:bg-indigo-800 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        {addLoading || updateLoading ? "Submitting..." : "Submit"}
-      </button>
     </form>
   );
 };

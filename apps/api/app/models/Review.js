@@ -53,6 +53,11 @@ const reviewSchema = new Schema(
       default: "pending",
       index: true,
     },
+    showOnHome: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     helpfulCount: {
       type: Number,
       default: 0,
@@ -82,6 +87,7 @@ const reviewSchema = new Schema(
 // One review per product per customer
 reviewSchema.index({ product: 1, customer: 1 }, { unique: true });
 reviewSchema.index({ product: 1, status: 1, createdAt: -1 });
+reviewSchema.index({ showOnHome: 1, status: 1 });
 
 export const Review =
   mongoose.models.Review ?? mongoose.model("Review", reviewSchema);
