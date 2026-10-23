@@ -11,8 +11,6 @@ This document defines standard operating procedures (SOP) for rotating productio
 3. **Canary Verification**: Always run health checks (`GET /api/health/ready`) and automated smoke tests before decomissioning previous keys.
 4. **Audit Trail**: Every credential change in the Admin Dashboard is automatically recorded in the `AuditLog` collection with actor, timestamp, and masked diff.
 
----
-
 ## 2. MongoDB Credentials Rotation
 
 ### Scenario
