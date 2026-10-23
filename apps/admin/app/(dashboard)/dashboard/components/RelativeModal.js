@@ -1,3 +1,5 @@
+"use client";
+
 import { useLayoutEffect } from "react";
 import { AiOutlineClose } from "react-icons/ai";
 
@@ -6,8 +8,13 @@ export default function RelativeModal({ setShowForm, title, children }) {
 
   useLayoutEffect(() => {
     const mainContainer = document.querySelector(".mainContainer");
-    // mainContainer.style.overflow = "hidden";
-    return () => (mainContainer.style.overflow = "auto");
+    if (mainContainer) {
+      return () => {
+        try {
+          mainContainer.style.overflow = "auto";
+        } catch (e) {}
+      };
+    }
   }, []);
 
   return (

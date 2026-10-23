@@ -1,78 +1,84 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
-import { Trash2 } from "lucide-react";
-import { toast } from "react-toastify";
+import React, { useState } from "react";
+import { Edit2, Trash2, Layers, CheckCircle2, XCircle } from "lucide-react";
 import Button from "@/components/ui/Button";
-import EditButton from "./EditButton";
-import { useDeleteCategoryMutation } from "@/store/slices/CategoryApi";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Badge from "@/components/ui/Badge";
 
-export default function SingeCategory({ category, i }) {
-  const [deleteCategory, { isLoading: isDeleting }] = useDeleteCategoryMutation();
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  const handleDelete = async () => {
-    try {
-      const res = await deleteCategory(category._id).unwrap();
-      toast.success(res?.message || "Category deleted successfully");
-      setShowConfirm(false);
-    } catch (err) {
-      toast.error(err?.data?.message || err?.message || "Failed to delete category");
-      setShowConfirm(false);
-    }
-  };
+export default function SingeCategory({ category, i, onEdit, onDelete }) {
+  const [imgError, setImgError] = useState(false);
+  const isActive = category?.status !== "inactive";
 
   return (
-    <tr
-      key={category?._id}
-      className="hover:bg-muted/20 transition-colors capitalize text-xs"
-    >
-      <td className="px-6 py-3.5 whitespace-nowrap text-muted-foreground font-mono">
+    <tr className="hover:bg-muted/20 transition-colors text-xs">
+      {/* Index */}
+      <td className="px-6 py-3.5 whitespace-nowrap text-muted-foreground font-mono w-16">
         {i + 1}
       </td>
-      <td className="px-6 py-3.5 whitespace-nowrap">
-        <Image
-          src={category?.categoryImg || "/placeholder.png"}
-          width={40}
-          height={40}
-          alt={category?.categoryName || "Category"}
-          className="object-contain bg-muted/40 border border-border h-10 w-10 rounded-lg p-1"
-        />
-      </td>
-      <td className="px-6 py-3.5 whitespace-nowrap font-medium text-foreground">
-        <div className="font-semibold text-sm">{category?.categoryName}</div>
-        {category?.slug && (
-          <span className="text-[11px] text-muted-foreground font-mono">
-            /{category.slug}
-          </span>
+
+      {/* Thumbnail */}
+      <td className="px-6 py-3.5 whitespace-nowrap w-24">
+        {category?.categoryImg && !imgError ? (
+          <img
+            src={category.categoryImg}
+            alt={category?.categoryName || "Category"}
+            onError={() => setImgError(true)}
+            className="h-10 w-10 rounded-lg object-contain bg-muted/40 border border-border p-1"
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+            <Layers className="w-5 h-5" />
+          </div>
         )}
       </td>
+
+      {/* Category Title & Slug */}
+      <td className="px-6 py-3.5 font-medium text-foreground">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-sm text-foreground">
+            {category?.categoryName}
+          </span>
+          {category?.categoryNameBn && (
+            <span className="text-xs text-muted-foreground font-normal">
+              ({category.categoryNameBn})
+            </span>
+          )}
+          {category?.featured && (
+            <Badge variant="accent" className="text-[10px] py-0 px-1.5">
+              Featured
+            </Badge>
+          )}
+        </div>
+        {category?.slug && (
+          <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+            /{category.slug}
+          </div>
+        )}
+      </td>
+
+      {/* Actions */}
       <td className="px-6 py-3.5 whitespace-nowrap text-right">
         <div className="flex items-center justify-end gap-1.5">
-          <EditButton category={category} />
           <Button
+            variant="outline"
             size="sm"
-            variant="ghost"
-            onClick={() => setShowConfirm(true)}
-            disabled={isDeleting}
-            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+            onClick={() => onEdit?.(category)}
+            className="h-8 px-2.5 text-xs font-medium gap-1"
+            title="Edit Category"
+          >
+            <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Edit</span>
+          </Button>
+
+          <Button
+            variant="ghost-destructive"
+            size="icon-sm"
+            onClick={() => onDelete?.(category)}
             title="Delete Category"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </Button>
         </div>
-
-        <ConfirmDialog
-          isOpen={showConfirm}
-          onClose={() => setShowConfirm(false)}
-          onConfirm={handleDelete}
-          title="Delete Category"
-          description={`Are you sure you want to delete "${category?.categoryName}"? This action cannot be undone if products are linked.`}
-          confirmText={isDeleting ? "Deleting..." : "Delete"}
-          variant="danger"
-        />
       </td>
     </tr>
   );

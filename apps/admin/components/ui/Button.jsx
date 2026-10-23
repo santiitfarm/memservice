@@ -26,8 +26,12 @@ export const Button = forwardRef(function Button(
       "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-xs border border-transparent active:scale-[0.98]",
     ghost:
       "text-foreground hover:bg-muted hover:text-foreground border border-transparent active:scale-[0.98]",
+    "ghost-destructive":
+      "text-destructive hover:bg-destructive/10 hover:text-destructive border border-transparent active:scale-[0.98]",
     outline:
       "border border-border/80 bg-background text-foreground hover:bg-muted/70 shadow-xs active:scale-[0.98]",
+    "outline-destructive":
+      "border border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive active:scale-[0.98]",
     destructive:
       "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-xs active:scale-[0.98] border border-transparent",
     accent:
@@ -40,6 +44,8 @@ export const Button = forwardRef(function Button(
     md: "h-10 px-4 py-2 text-sm rounded-lg gap-2",
     lg: "h-11 px-5 text-sm rounded-xl gap-2.5",
     icon: "h-9 w-9 p-0 rounded-lg",
+    "icon-sm": "h-8 w-8 p-0 rounded-lg",
+    "icon-xs": "h-7 w-7 p-0 rounded-md",
   };
 
   const variantClass = variants[variant] || variants.primary;

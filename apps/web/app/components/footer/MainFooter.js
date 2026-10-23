@@ -43,8 +43,8 @@ export default function MainFooter({ site = {}, menus = {} }) {
     {
       title: "Customer Care",
       links: [
-        { name: "My Account", url: "/account" },
-        { name: "Track Order", url: "/track" },
+        { name: "My Account", url: "/account/login" },
+        { name: "Track Order", url: "/track-order" },
         { name: "Cart", url: "/cart" },
         { name: "Wishlist", url: "/wishlist" },
       ],

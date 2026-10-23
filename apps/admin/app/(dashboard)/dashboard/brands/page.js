@@ -2,29 +2,70 @@
 
 import React, { useState } from "react";
 import { Award, Plus, Search, RotateCcw } from "lucide-react";
-import { useFetchBrandsQuery } from "@/store/slices/brandApi";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { toast } from "react-toastify";
+import {
+  useFetchBrandsQuery,
+  useDeleteBrandMutation,
+} from "@/store/slices/brandApi";
+import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
 import EmptyState from "@/components/ui/EmptyState";
-import RelativeModal from "../components/RelativeModal";
+import Modal from "@/components/ui/Modal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import BrandForm from "./_componenets/BrandForm";
 import SingeBrand from "./_componenets/SingeBrand";
 
 export default function BrandsAdminPanel() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState(null);
+  const [brandToDelete, setBrandToDelete] = useState(null);
+
   const { data, error, isError, isLoading, isSuccess, refetch, isFetching } =
     useFetchBrandsQuery();
+  const [deleteBrand, { isLoading: isDeleting }] = useDeleteBrandMutation();
+
   const brands = (isSuccess && data?.brands) || [];
 
-  const toggleModal = () => {
-    setIsOpen(!isOpen);
+  const filteredBrands = brands.filter((brand) => {
+    const q = searchQuery.toLowerCase();
+    const title = (brand.title || "").toLowerCase();
+    const slug = (brand.slug || "").toLowerCase();
+    const cat = (brand.category?.categoryName || "").toLowerCase();
+    return title.includes(q) || slug.includes(q) || cat.includes(q);
+  });
+
+  const handleOpenAddModal = () => {
+    setSelectedBrand(null);
+    setIsModalOpen(true);
   };
 
-  const filteredBrands = brands.filter((brand) =>
-    (brand.title || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleOpenEditModal = (brand) => {
+    setSelectedBrand(brand);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedBrand(null);
+  };
+
+  const handleDeleteBrand = async () => {
+    if (!brandToDelete) return;
+    const brandId = brandToDelete._id || brandToDelete.id;
+    try {
+      const res = await deleteBrand(brandId).unwrap();
+      toast.success(res?.message || "Brand deleted successfully");
+      setBrandToDelete(null);
+      refetch();
+    } catch (err) {
+      toast.error(
+        err?.data?.message || err?.message || "Failed to delete brand"
+      );
+      setBrandToDelete(null);
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
@@ -52,16 +93,10 @@ export default function BrandsAdminPanel() {
             Refresh
           </Button>
 
-          <Button size="sm" onClick={toggleModal} className="gap-1.5">
+          <Button size="sm" onClick={handleOpenAddModal} className="gap-1.5">
             <Plus className="w-4 h-4" /> Add Brand
           </Button>
         </div>
-
-        {isOpen && (
-          <RelativeModal setShowForm={toggleModal} title={"Add Brand"}>
-            <BrandForm setShowForm={toggleModal} />
-          </RelativeModal>
-        )}
       </div>
 
       {/* Main Table Card */}
@@ -72,7 +107,7 @@ export default function BrandsAdminPanel() {
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search brands by company or generic title..."
+                placeholder="Search brands by company, slug, or category..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-xs bg-muted/20 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
@@ -109,6 +144,12 @@ export default function BrandsAdminPanel() {
                     ? `No brands matched "${searchQuery}".`
                     : "No pharmaceutical brands configured yet."
                 }
+                action={
+                  <Button size="sm" onClick={handleOpenAddModal} className="mt-2">
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Create First Brand
+                  </Button>
+                }
               />
             </div>
           ) : (
@@ -127,7 +168,13 @@ export default function BrandsAdminPanel() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filteredBrands.map((brand, i) => (
-                    <SingeBrand key={brand._id || brand.id} brand={brand} i={i} />
+                    <SingeBrand
+                      key={brand._id || brand.id}
+                      brand={brand}
+                      i={i}
+                      onEdit={handleOpenEditModal}
+                      onDelete={setBrandToDelete}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -135,6 +182,36 @@ export default function BrandsAdminPanel() {
           )}
         </CardContent>
       </Card>
+
+      {/* Add / Edit Brand Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={selectedBrand ? "Edit Brand" : "Add New Brand"}
+        description="Configure pharmaceutical manufacturer, slider order, category, and official logo."
+        maxWidth="max-w-xl"
+      >
+        <BrandForm
+          brand={selectedBrand}
+          isEdit={Boolean(selectedBrand)}
+          onClose={handleCloseModal}
+          onSuccess={() => {
+            handleCloseModal();
+            refetch();
+          }}
+        />
+      </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(brandToDelete)}
+        onClose={() => setBrandToDelete(null)}
+        onConfirm={handleDeleteBrand}
+        title="Delete Brand"
+        description={`Are you sure you want to delete brand "${brandToDelete?.title}"? This cannot be undone if products are linked.`}
+        confirmText={isDeleting ? "Deleting..." : "Delete"}
+        variant="danger"
+      />
     </div>
   );
 }

@@ -71,7 +71,7 @@ export async function getSiteBootstrap() {
           { name: "FAQ", url: "/faq" },
         ],
         "footer-3": [
-          { name: "My Account", url: "/account" },
+          { name: "My Account", url: "/account/login" },
           { name: "Cart", url: "/cart" },
           { name: "Wishlist", url: "/wishlist" },
         ],

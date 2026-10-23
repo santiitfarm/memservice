@@ -54,6 +54,7 @@ export async function POST(request) {
     }
 
     const sanitizedContent = sanitizeRichText(body.content || "");
+    const sanitizedContentBn = sanitizeRichText(body.contentBn || "");
     const publishedAt =
       body.status === "published" ? body.publishedAt || new Date() : null;
 
@@ -61,6 +62,7 @@ export async function POST(request) {
       ...body,
       slug,
       content: sanitizedContent,
+      contentBn: sanitizedContentBn,
       publishedAt,
       updatedBy: staff?._id || null,
     });

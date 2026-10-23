@@ -2,28 +2,69 @@
 
 import React, { useState } from "react";
 import { Layers, Plus, Search, RotateCcw } from "lucide-react";
-import { useFetchCategoriesQuery } from "@/store/slices/CategoryApi";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { toast } from "react-toastify";
+import {
+  useFetchCategoriesQuery,
+  useDeleteCategoryMutation,
+} from "@/store/slices/CategoryApi";
+import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
 import EmptyState from "@/components/ui/EmptyState";
+import Modal from "@/components/ui/Modal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import CategoryForm from "./_components/CategoryForm";
 import SingeCategory from "./_components/SingeCategory";
-import RelativeModal from "../components/RelativeModal";
 
 export default function CategoryAdminPanel() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const { data, isLoading, isError, error, refetch, isFetching } = useFetchCategoriesQuery();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+
+  const { data, isLoading, isError, error, refetch, isFetching } =
+    useFetchCategoriesQuery();
+  const [deleteCategory, { isLoading: isDeleting }] = useDeleteCategoryMutation();
+
   const categories = data?.categories || [];
 
-  const toggleModal = () => {
-    setIsOpen(!isOpen);
+  const filteredCategories = categories.filter((category) => {
+    const q = searchQuery.toLowerCase();
+    const nameEn = (category.categoryName || "").toLowerCase();
+    const nameBn = (category.categoryNameBn || "").toLowerCase();
+    const slug = (category.slug || "").toLowerCase();
+    return nameEn.includes(q) || nameBn.includes(q) || slug.includes(q);
+  });
+
+  const handleOpenAddModal = () => {
+    setSelectedCategory(null);
+    setIsModalOpen(true);
   };
 
-  const filteredCategories = categories?.filter((category) =>
-    (category.categoryName || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleOpenEditModal = (cat) => {
+    setSelectedCategory(cat);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedCategory(null);
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!categoryToDelete) return;
+    try {
+      const res = await deleteCategory(categoryToDelete._id).unwrap();
+      toast.success(res?.message || "Category deleted successfully");
+      setCategoryToDelete(null);
+      refetch();
+    } catch (err) {
+      toast.error(
+        err?.data?.message || err?.message || "Failed to delete category"
+      );
+      setCategoryToDelete(null);
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full">
@@ -38,6 +79,7 @@ export default function CategoryAdminPanel() {
             Manage medicine classifications, health departments, and catalog hierarchy.
           </p>
         </div>
+
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -49,16 +91,11 @@ export default function CategoryAdminPanel() {
             <RotateCcw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          <Button size="sm" onClick={toggleModal} className="gap-1.5">
+
+          <Button size="sm" onClick={handleOpenAddModal} className="gap-1.5">
             <Plus className="w-4 h-4" /> Add Category
           </Button>
         </div>
-
-        {isOpen && (
-          <RelativeModal setShowForm={toggleModal} title={"Add Category"}>
-            <CategoryForm setShowForm={toggleModal} />
-          </RelativeModal>
-        )}
       </div>
 
       {/* Main Table Card */}
@@ -69,7 +106,7 @@ export default function CategoryAdminPanel() {
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search categories by title..."
+                placeholder="Search categories by title, bangla name, or slug..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-xs bg-muted/20 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
@@ -106,6 +143,12 @@ export default function CategoryAdminPanel() {
                     ? `No categories matched "${searchQuery}".`
                     : "No categories have been added to the catalog yet."
                 }
+                action={
+                  <Button size="sm" onClick={handleOpenAddModal} className="mt-2">
+                    <Plus className="w-4 h-4 mr-1.5" />
+                    Create First Category
+                  </Button>
+                }
               />
             </div>
           ) : (
@@ -121,7 +164,13 @@ export default function CategoryAdminPanel() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filteredCategories.map((category, i) => (
-                    <SingeCategory key={category._id} category={category} i={i} />
+                    <SingeCategory
+                      key={category._id || category.id}
+                      category={category}
+                      i={i}
+                      onEdit={handleOpenEditModal}
+                      onDelete={setCategoryToDelete}
+                    />
                   ))}
                 </tbody>
               </table>
@@ -129,6 +178,36 @@ export default function CategoryAdminPanel() {
           )}
         </CardContent>
       </Card>
+
+      {/* Add / Edit Category Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={selectedCategory ? "Edit Category" : "Add New Category"}
+        description="Configure category taxonomy, bilingual name, display order, and icon."
+        maxWidth="max-w-xl"
+      >
+        <CategoryForm
+          category={selectedCategory}
+          isEdit={Boolean(selectedCategory)}
+          onClose={handleCloseModal}
+          onSuccess={() => {
+            handleCloseModal();
+            refetch();
+          }}
+        />
+      </Modal>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(categoryToDelete)}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={handleDeleteCategory}
+        title="Delete Category"
+        description={`Are you sure you want to delete category "${categoryToDelete?.categoryName}"? This action cannot be undone if products are linked.`}
+        confirmText={isDeleting ? "Deleting..." : "Delete"}
+        variant="danger"
+      />
     </div>
   );
 }

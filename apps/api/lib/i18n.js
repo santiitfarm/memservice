@@ -17,6 +17,10 @@ export function getLocale(request) {
     if (langParam === "bn" || langParam === "bangla") return "bn";
     if (langParam === "en" || langParam === "english") return "en";
 
+    const xLocale = request.headers.get("x-locale")?.toLowerCase();
+    if (xLocale === "bn" || xLocale === "bangla") return "bn";
+    if (xLocale === "en" || xLocale === "english") return "en";
+
     const acceptLang = request.headers.get("accept-language") || "";
     if (acceptLang.includes("bn")) return "bn";
   } catch {

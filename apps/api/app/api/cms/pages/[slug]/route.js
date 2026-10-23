@@ -23,6 +23,11 @@ export async function GET(request, context) {
       );
     }
 
+    // Authenticated staff in admin dashboard need raw unlocalized bilingual fields
+    if (staff) {
+      return NextResponse.json({ success: true, page }, { status: 200 });
+    }
+
     const { getLocale, resolveLocalized } = await import("@/lib/i18n");
     const lang = getLocale(request);
     const localizedPage = {
@@ -73,6 +78,9 @@ export async function PUT(request, context) {
 
     if (body.content !== undefined) {
       body.content = sanitizeRichText(body.content);
+    }
+    if (body.contentBn !== undefined) {
+      body.contentBn = sanitizeRichText(body.contentBn);
     }
 
     if (body.status === "published" && !existing.publishedAt) {

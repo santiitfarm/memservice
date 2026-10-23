@@ -34,6 +34,7 @@ export async function generateMetadata({ params }) {
 
 export default async function CmsContentPage({ params }) {
   const { slug } = await params;
+  console.log(">>> CmsContentPage slug:", slug);
   const cookieStore = await cookies();
   const lang = cookieStore.get("lang")?.value || "en";
 
@@ -131,7 +132,7 @@ export default async function CmsContentPage({ params }) {
           {/* CMS Rich Content Block */}
           {content && (
             <div
-              className="prose prose-neutral dark:prose-invert max-w-none text-sm text-foreground/90 leading-relaxed space-y-4"
+              className="cms-content max-w-none text-sm text-foreground/90 leading-relaxed"
               dangerouslySetInnerHTML={{ __html: content }}
             />
           )}

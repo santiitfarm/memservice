@@ -138,3 +138,92 @@
   background: rgb(var(--destructive)) !important;
 }
 
+/* Dynamic CMS Rich Content Typography */
+.cms-content {
+  line-height: 1.75;
+}
+.cms-content h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  color: rgb(var(--foreground));
+  border-bottom: 1px solid rgb(var(--border) / 0.6);
+  padding-bottom: 0.35rem;
+}
+.cms-content h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: rgb(var(--foreground));
+}
+.cms-content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.35rem;
+  color: rgb(var(--foreground));
+}
+.cms-content p {
+  margin-bottom: 1rem;
+  color: rgb(var(--foreground) / 0.88);
+}
+.cms-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+  space-y: 0.35rem;
+}
+.cms-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1.25rem;
+  space-y: 0.35rem;
+}
+.cms-content li {
+  margin-bottom: 0.35rem;
+  color: rgb(var(--foreground) / 0.88);
+}
+.cms-content blockquote {
+  border-left: 4px solid rgb(var(--primary));
+  padding-left: 1rem;
+  margin: 1.25rem 0;
+  font-style: italic;
+  color: rgb(var(--muted-foreground));
+  background: rgb(var(--muted) / 0.3);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.cms-content a {
+  color: rgb(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+.cms-content a:hover {
+  opacity: 0.8;
+}
+.cms-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgb(var(--border));
+}
+.cms-content th {
+  background: rgb(var(--muted) / 0.6);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid rgb(var(--border));
+}
+.cms-content td {
+  padding: 0.65rem 1rem;
+  border: 1px solid rgb(var(--border));
+}
+

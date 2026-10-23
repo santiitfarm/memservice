@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast } from "react-toastify";
 import {
@@ -10,9 +10,12 @@ import {
   Trash2,
   ExternalLink,
   RotateCcw,
-  Eye,
   CheckCircle2,
   Clock,
+  Globe,
+  Languages,
+  Sliders,
+  Sparkles,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -24,6 +27,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import Modal from "@/components/ui/Modal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import {
   useFetchPagesQuery,
   useCreatePageMutation,
@@ -42,8 +46,6 @@ const TEMPLATES = [
 
 export default function CmsPagesPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useFetchPagesQuery();
-  const [createPage, { isLoading: isCreating }] = useCreatePageMutation();
-  const [updatePage, { isLoading: isUpdating }] = useUpdatePageMutation();
   const [deletePage, { isLoading: isDeleting }] = useDeletePageMutation();
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -51,6 +53,8 @@ export default function CmsPagesPage() {
   const [pageToDelete, setPageToDelete] = useState(null);
 
   const pages = data?.pages || [];
+  const storefrontBase =
+    process.env.NEXT_PUBLIC_WEB_URL || "http://localhost:3000";
 
   const handleDelete = async () => {
     if (!pageToDelete) return;
@@ -58,6 +62,7 @@ export default function CmsPagesPage() {
       await deletePage(pageToDelete.slug).unwrap();
       toast.success("Page deleted successfully");
       setPageToDelete(null);
+      refetch();
     } catch (err) {
       toast.error(err?.data?.error || err?.message || "Failed to delete page");
     }
@@ -70,10 +75,10 @@ export default function CmsPagesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <FileText className="w-7 h-7 text-primary" />
-            Static Pages & Legal Policies
+            Static Pages & Footer Policies
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Create and edit content pages like About Us, Privacy Policy, Terms & Conditions, and Return Policy.
+            Manage your storefront content pages dynamically without hardcoding (About Us, Privacy Policy, Terms & Conditions, Refund Policy, etc.).
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -102,10 +107,13 @@ export default function CmsPagesPage() {
 
       {/* Pages List */}
       <Card>
-        <CardHeader className="border-b border-border py-4">
+        <CardHeader className="border-b border-border py-4 flex flex-row items-center justify-between">
           <CardTitle className="text-base font-bold text-foreground">
-            All Pages ({pages.length})
+            All Content Pages ({pages.length})
           </CardTitle>
+          <span className="text-xs text-muted-foreground">
+            Changes reflect live on the website storefront
+          </span>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -154,10 +162,15 @@ export default function CmsPagesPage() {
                     const isPublished = p.status === "published";
                     return (
                       <tr key={p._id || p.slug} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           <div>
-                            <div className="font-semibold text-foreground text-sm">
-                              {p.title}
+                            <div className="font-semibold text-foreground text-sm flex items-center gap-2">
+                              <span>{p.title}</span>
+                              {p.titleBn && (
+                                <span className="text-xs text-muted-foreground font-normal">
+                                  ({p.titleBn})
+                                </span>
+                              )}
                             </div>
                             <span className="font-mono text-xs text-muted-foreground">
                               /{p.slug}
@@ -165,13 +178,13 @@ export default function CmsPagesPage() {
                           </div>
                         </td>
 
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           <Badge variant="secondary" className="capitalize">
                             {p.template || "default"}
                           </Badge>
                         </td>
 
-                        <td className="py-3 px-4">
+                        <td className="py-3.5 px-4">
                           {isPublished ? (
                             <Badge variant="success" className="gap-1">
                               <CheckCircle2 className="w-3 h-3" /> Published
@@ -183,20 +196,21 @@ export default function CmsPagesPage() {
                           )}
                         </td>
 
-                        <td className="py-3 px-4 text-muted-foreground">
+                        <td className="py-3.5 px-4 text-muted-foreground">
                           {p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : "—"}
                         </td>
 
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1">
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
                             <a
-                              href={`http://localhost:3000/${p.slug}`}
+                              href={`${storefrontBase}/${p.slug}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="p-1.5 text-muted-foreground hover:text-foreground rounded"
-                              title="Preview on Storefront"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border border-border bg-background text-foreground hover:bg-muted transition-colors"
+                              title="View Live on Website"
                             >
-                              <ExternalLink className="w-4 h-4" />
+                              <ExternalLink className="w-3.5 h-3.5 text-primary" />
+                              <span>View Live</span>
                             </a>
                             <Button
                               variant="ghost"
@@ -231,7 +245,7 @@ export default function CmsPagesPage() {
         </CardContent>
       </Card>
 
-      {/* Page Editor Modal / Drawer */}
+      {/* Page Editor Modal */}
       {isEditorOpen && (
         <PageEditorModal
           isOpen={isEditorOpen}
@@ -260,12 +274,15 @@ export default function CmsPagesPage() {
 
 function PageEditorModal({ isOpen, onClose, slug, onSaved }) {
   const isEdit = Boolean(slug);
-  const { data: pageData, isLoading } = useFetchSinglePageQuery(slug, { skip: !isEdit });
+  const { data: pageData, isLoading } = useFetchSinglePageQuery(slug, {
+    skip: !isEdit,
+  });
   const [createPage, { isLoading: isCreating }] = useCreatePageMutation();
   const [updatePage, { isLoading: isUpdating }] = useUpdatePageMutation();
 
   const isSaving = isCreating || isUpdating;
 
+  const [activeTab, setActiveTab] = useState("en"); // "en" | "bn" | "settings"
   const [title, setTitle] = useState("");
   const [titleBn, setTitleBn] = useState("");
   const [pageSlug, setPageSlug] = useState("");
@@ -276,7 +293,7 @@ function PageEditorModal({ isOpen, onClose, slug, onSaved }) {
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (pageData?.page && isEdit) {
       const p = pageData.page;
       setTitle(p.title || "");
@@ -298,6 +315,7 @@ function PageEditorModal({ isOpen, onClose, slug, onSaved }) {
       setStatus("published");
       setMetaTitle("");
       setMetaDescription("");
+      setActiveTab("en");
     }
   }, [pageData, isEdit]);
 
@@ -305,6 +323,7 @@ function PageEditorModal({ isOpen, onClose, slug, onSaved }) {
     e.preventDefault();
     if (!title.trim() || !pageSlug.trim()) {
       toast.error("Title and slug are required");
+      setActiveTab("en");
       return;
     }
 
@@ -325,7 +344,7 @@ function PageEditorModal({ isOpen, onClose, slug, onSaved }) {
     try {
       if (isEdit) {
         await updatePage({ slug, ...payload }).unwrap();
-        toast.success("Page updated and revalidated!");
+        toast.success("Page updated and revalidated live on storefront!");
       } else {
         await createPage(payload).unwrap();
         toast.success("Page created successfully!");
@@ -340,9 +359,9 @@ function PageEditorModal({ isOpen, onClose, slug, onSaved }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEdit ? "Edit Content Page" : "Create New Page"}
-      description="Manage page layout, rich text copy, and search engine metadata."
-      maxWidth="max-w-3xl"
+      title={isEdit ? `Edit Page: ${title || slug}` : "Create New Content Page"}
+      description="Manage page title, bilingual content with rich text formatting, and search engine metadata."
+      maxWidth="max-w-4xl"
     >
       {isLoading && isEdit ? (
         <div className="p-8 space-y-4">
@@ -350,113 +369,191 @@ function PageEditorModal({ isOpen, onClose, slug, onSaved }) {
           <Skeleton className="h-28 w-full" />
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input
-              label="Page Title (English)"
-              value={title}
-              onChange={(e) => {
-                const val = e.target.value;
-                setTitle(val);
-                if (!isEdit) {
-                  setPageSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
-                }
-              }}
-              placeholder="e.g. Terms and Conditions"
-              required
-            />
-            <Input
-              label="Page Title (Bangla)"
-              value={titleBn}
-              onChange={(e) => setTitleBn(e.target.value)}
-              placeholder="e.g. ব্যবহারের শর্তাবলী"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input
-              label="URL Slug"
-              value={pageSlug}
-              onChange={(e) => setPageSlug(e.target.value)}
-              placeholder="terms-and-conditions"
-              disabled={isEdit}
-              required
-            />
-            <Select
-              label="Page Template Layout"
-              value={template}
-              onChange={(e) => setTemplate(e.target.value)}
+        <form onSubmit={handleSubmit} className="space-y-5 max-h-[78vh] overflow-y-auto pr-1">
+          {/* Navigation Tabs */}
+          <div className="flex items-center gap-1 border-b border-border pb-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("en")}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                activeTab === "en"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
             >
-              {TEMPLATES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </Select>
+              <Globe className="w-3.5 h-3.5" />
+              <span>English Content</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("bn")}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                activeTab === "bn"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <Languages className="w-3.5 h-3.5" />
+              <span>Bangla Content (বাংলা)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("settings")}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                activeTab === "settings"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Page Layout & SEO</span>
+            </button>
           </div>
 
-          {/* Content (English) */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-foreground uppercase tracking-wider block">
-              Page Content (HTML / Rich Text - English)
-            </label>
-            <textarea
-              rows={6}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="<p>Enter page content here. HTML tags like <h2>, <p>, <ul>, <li> are allowed.</p>"
-              className="w-full text-xs font-mono p-3 rounded-md border border-input bg-card text-foreground"
-            />
-          </div>
+          {/* TAB 1: English Content */}
+          {activeTab === "en" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  label="Page Title (English)"
+                  value={title}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTitle(val);
+                    if (!isEdit && !pageSlug) {
+                      setPageSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
+                    }
+                  }}
+                  placeholder="e.g. Terms and Conditions"
+                  required
+                />
+                <Input
+                  label="URL Slug (Permanent)"
+                  value={pageSlug}
+                  onChange={(e) => setPageSlug(e.target.value)}
+                  placeholder="terms-and-conditions"
+                  disabled={isEdit}
+                  required
+                />
+              </div>
 
-          {/* Content (Bangla) */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-foreground uppercase tracking-wider block">
-              Page Content (HTML / Rich Text - Bangla)
-            </label>
-            <textarea
-              rows={4}
-              value={contentBn}
-              onChange={(e) => setContentBn(e.target.value)}
-              placeholder="বাংলা অনুচ্ছেদ লিখুন..."
-              className="w-full text-xs font-mono p-3 rounded-md border border-input bg-card text-foreground"
-            />
-          </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wider block">
+                    Page Body Content (English)
+                  </label>
+                  <span className="text-[11px] text-muted-foreground">
+                    Format headings, bullet lists, tables, and links
+                  </span>
+                </div>
+                <RichTextEditor
+                  value={content}
+                  onChange={(val) => setContent(val)}
+                  placeholder="Write detailed policy or company information in English..."
+                  minHeight="min-h-[260px]"
+                />
+              </div>
+            </div>
+          )}
 
-          {/* SEO fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg border border-border bg-muted/20">
-            <Input
-              label="SEO Title Tag"
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              placeholder="Leave blank to use page title"
-            />
-            <Input
-              label="SEO Meta Description"
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              placeholder="Brief summary for Google"
-            />
-          </div>
+          {/* TAB 2: Bangla Content */}
+          {activeTab === "bn" && (
+            <div className="space-y-4">
+              <Input
+                label="Page Title (Bangla - বাংলা)"
+                value={titleBn}
+                onChange={(e) => setTitleBn(e.target.value)}
+                placeholder="e.g. ব্যবহারের শর্তাবলী / আমাদের সম্পর্কে"
+              />
 
-          {/* Status switch */}
-          <div className="p-3 rounded-lg border border-border bg-muted/30">
-            <Switch
-              label="Published Live"
-              description="Make this page publicly accessible to storefront visitors"
-              checked={status === "published"}
-              onChange={(checked) => setStatus(checked ? "published" : "draft")}
-            />
-          </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wider block">
+                    Page Body Content (Bangla - বাংলা)
+                  </label>
+                  <span className="text-[11px] text-muted-foreground">
+                    বাংলা ভাষায় পেজের বিস্তারিত তথ্য লিখুন
+                  </span>
+                </div>
+                <RichTextEditor
+                  value={contentBn}
+                  onChange={(val) => setContentBn(val)}
+                  placeholder="বাংলায় প্যারাগ্রাফ, পয়েন্ট এবং বিস্তারিত বিবরণ লিখুন..."
+                  minHeight="min-h-[260px]"
+                />
+              </div>
+            </div>
+          )}
 
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-              Cancel
-            </Button>
-            <Button type="submit" isLoading={isSaving}>
-              {isEdit ? "Update Page" : "Create Page"}
-            </Button>
+          {/* TAB 3: Settings & SEO */}
+          {activeTab === "settings" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Select
+                  label="Page Template Layout"
+                  value={template}
+                  onChange={(e) => setTemplate(e.target.value)}
+                >
+                  {TEMPLATES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </Select>
+
+                <div className="p-3 rounded-lg border border-border bg-muted/20 flex flex-col justify-center">
+                  <Switch
+                    label="Published Status"
+                    description={
+                      status === "published"
+                        ? "Visible to storefront visitors"
+                        : "Hidden draft (only visible to admin staff)"
+                    }
+                    checked={status === "published"}
+                    onChange={(checked) => setStatus(checked ? "published" : "draft")}
+                  />
+                </div>
+              </div>
+
+              {/* SEO fields */}
+              <div className="p-4 rounded-xl border border-border bg-muted/20 space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  <span>Search Engine Optimization (SEO)</span>
+                </div>
+
+                <Input
+                  label="SEO Meta Title"
+                  value={metaTitle}
+                  onChange={(e) => setMetaTitle(e.target.value)}
+                  placeholder="e.g. Privacy Policy & Patient Data Security - Mem Service"
+                />
+
+                <Input
+                  label="SEO Meta Description"
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  placeholder="Brief summary displayed on Google search results (120-160 characters)"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Modal Actions */}
+          <div className="flex items-center justify-between pt-4 border-t border-border">
+            <span className="text-xs text-muted-foreground">
+              Slug: <code className="text-primary font-mono font-semibold">/{pageSlug || "slug"}</code>
+            </span>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+                Cancel
+              </Button>
+              <Button type="submit" isLoading={isSaving} className="gap-1.5">
+                {isEdit ? "Update Page" : "Create Page"}
+              </Button>
+            </div>
           </div>
         </form>
       )}

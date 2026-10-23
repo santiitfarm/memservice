@@ -22,7 +22,7 @@ const pageSchema = new Schema(
     },
     template: {
       type: String,
-      enum: ["default", "about", "legal", "contact"],
+      enum: ["default", "about", "legal", "contact", "landing"],
       default: "default",
     },
     content: {

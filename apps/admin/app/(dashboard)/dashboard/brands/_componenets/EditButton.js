@@ -1,33 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Button from "@/components/ui/Button";
-import RelativeModal from "../../components/RelativeModal";
-import BrandForm from "./BrandForm";
+import { Edit2 } from "lucide-react";
 
-export default function EditButton({ brand }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleModal = () => {
-    setIsOpen(!isOpen);
-  };
-
+export default function EditButton({ brand, onClick }) {
   return (
-    <div>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={toggleModal}
-        className="h-7 px-2.5 text-xs font-medium"
-      >
-        Edit
-      </Button>
-
-      {isOpen && (
-        <RelativeModal setShowForm={toggleModal} title={"Edit Brand"}>
-          <BrandForm setShowForm={toggleModal} isEdit={true} brand={brand} />
-        </RelativeModal>
-      )}
-    </div>
+    <Button
+      size="sm"
+      variant="outline"
+      onClick={() => onClick?.(brand)}
+      className="h-8 px-2.5 text-xs font-medium gap-1"
+    >
+      <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+      <span>Edit</span>
+    </Button>
   );
 }
