@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import Search from "./Search";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import LanguageToggle from "@/components/ui/LanguageToggle";
 import { Menu as MenuIcon, PhoneCall, X } from "lucide-react";
 import { PiPhoneCallThin } from "react-icons/pi";
 import { useState } from "react";
@@ -21,7 +20,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function SearchAndSupport({ site, menus, categories = [] }) {
   const contactPhone = site?.contact?.phone || "+8801711655686";
   const rawPhone = contactPhone.replace(/[^0-9+]/g, "");
-  const headerMenus = menus?.header || [];
+  const defaultHeaderMenus = [
+    { label: "Home", url: "/" },
+    { label: "Shop", url: "/shop" },
+    { label: "Consultation", url: "/consultation/doctor" },
+    { label: "Offers", url: "/offer" },
+  ];
+  const headerMenus =
+    Array.isArray(menus?.header) && menus.header.length > 0
+      ? menus.header
+      : defaultHeaderMenus;
   const logoLight = site?.logoLight || "/assets/logo/logo.png";
   const logoDark = site?.logoDark || site?.logoLight || "/assets/logo/logo.png";
   const siteName = site?.siteName || "Mem Service";
@@ -77,13 +85,11 @@ export default function SearchAndSupport({ site, menus, categories = [] }) {
             </div>
           </div>
 
-          <LanguageToggle />
           <ThemeToggle compact={true} />
         </div>
 
-        {/* Mobile Actions: Language Toggle + Theme Toggle + Menu Drawer */}
+        {/* Mobile Actions: Theme Toggle + Menu Drawer */}
         <div className="flex items-center gap-2 lg:hidden">
-          <LanguageToggle compact={true} />
           <ThemeToggle compact={true} />
 
           <Sheet>
@@ -124,7 +130,7 @@ export default function SearchAndSupport({ site, menus, categories = [] }) {
                           href={item.url || "/"}
                           className="flex items-center justify-between py-2.5 px-3 rounded-lg text-sm font-medium text-foreground hover:bg-muted hover:text-primary transition-colors"
                         >
-                          <span>{item.name}</span>
+                          <span>{item.label || item.name || item.title}</span>
                         </Link>
                       </SheetClose>
                     ))}

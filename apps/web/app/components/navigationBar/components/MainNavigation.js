@@ -30,17 +30,31 @@ export default function MainNavigation({ menus = {} }) {
   }, []);
 
   // Filter out any dead hardcoded items like Blog, Elements, Features
-  const rawItems = menus?.header || [
-    { name: "Home", url: "/" },
-    { name: "Shop", url: "/shop" },
-    { name: "Consultation", url: "/consultation/doctor" },
-    { name: "Offers", url: "/offer" },
+  const defaultHeaderItems = [
+    { label: "Home", url: "/" },
+    { label: "Shop", url: "/shop" },
+    { label: "Consultation", url: "/consultation/doctor" },
+    { label: "Offers", url: "/offer" },
   ];
 
+  const rawItems =
+    Array.isArray(menus?.header) && menus.header.length > 0
+      ? menus.header
+      : defaultHeaderItems;
+
   const deadNames = ["blog", "elements", "features"];
-  const navItems = rawItems.filter(
-    (item) => !deadNames.includes(item?.name?.trim().toLowerCase())
-  );
+  const navItems = rawItems
+    .map((item) => ({
+      ...item,
+      displayName: item?.label || item?.name || item?.title || "",
+    }))
+    .filter((item) => {
+      const name = item.displayName.trim().toLowerCase();
+      if (!name) return false;
+      if (deadNames.includes(name)) return false;
+      if (item.status && item.status !== "active") return false;
+      return true;
+    });
 
   const cartCount = cart.length;
   const wishlistCount = wishlist.length;
@@ -54,7 +68,7 @@ export default function MainNavigation({ menus = {} }) {
           const isActive = pathname === item.url;
           return (
             <Link
-              key={idx}
+              key={item.url || idx}
               href={item.url || "/"}
               className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 isActive
@@ -62,7 +76,7 @@ export default function MainNavigation({ menus = {} }) {
                   : "text-white/90 hover:bg-white/15 hover:text-white"
               }`}
             >
-              {item.name}
+              {item.displayName}
             </Link>
           );
         })}

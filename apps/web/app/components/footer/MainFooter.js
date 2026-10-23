@@ -136,7 +136,7 @@ export default function MainFooter({ site = {}, menus = {} }) {
                   href={link.url || "/"}
                   className="text-xs sm:text-sm text-muted-foreground transition-colors duration-200 hover:text-primary"
                 >
-                  {link.name}
+                  {link.label || link.name || link.title}
                 </Link>
               </li>
             ))}
