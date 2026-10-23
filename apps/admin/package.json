@@ -44,7 +44,7 @@
     "sslcommerz-lts": "^1.1.0",
     "streamifier": "^0.1.1",
     "tailwind-merge": "^2.5.4",
-    "mongodb": "^6.10.0"
+    "mongodb": "^7.7.0"
   },
   "devDependencies": {
     "@types/node": "22.9.1",
