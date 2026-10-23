@@ -13,7 +13,7 @@
     "@number-flow/react": "^0.3.0",
     "@reduxjs/toolkit": "^2.3.0",
     "@tailwindcss/typography": "^0.5.15",
-    "@tinymce/tinymce-react": "^5.1.1",
+    "@tinymce/tinymce-react": "^6.3.1",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "bkash-payment-gateway": "^2.0.1",
