@@ -11,6 +11,7 @@ import CodeEditor from "./RichTextEditor";
 import { useFetchCategoriesQuery } from "@/store/slices/CategoryApi";
 import AutoFillProductForm from "./AutoFillForm";
 import VariantsEditor from "../../components/VariantsEditor";
+import Button from "@/components/ui/Button";
 import { useState } from "react";
 
 export default function AddProductForm() {
@@ -38,8 +39,10 @@ export default function AddProductForm() {
       tags: data?.tags?.split(","),
       pack_size: data?.pack_size?.split(","),
       product_features: data.product_features?.split("\n") || [],
-      specificationsHtml: codeRef.current?.getContent() || "",
-      specificationsHtmlBangla: codeRefBangla.current?.getContent() || "",
+      specificationsHtml:
+        data.specificationsHtml || codeRef.current?.getContent() || "",
+      specificationsHtmlBangla:
+        data.specificationsHtmlBangla || codeRefBangla.current?.getContent() || "",
     });
   };
   useEffect(() => {
@@ -449,8 +452,8 @@ export default function AddProductForm() {
 
       <div className="col-span-3">
         <label
-          htmlFor="description"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-400"
+          htmlFor="specificationsHtml"
+          className="block text-sm font-semibold text-foreground mb-1.5"
         >
           Description (English)
         </label>
@@ -458,15 +461,20 @@ export default function AddProductForm() {
           name="specificationsHtml"
           control={control}
           render={({ field }) => (
-            // <RichTextEditor content={field.value} onChange={field.onChange} />
-            <CodeEditor content={field.value} ref={codeRef} />
+            <CodeEditor
+              content={field.value}
+              onChange={field.onChange}
+              ref={codeRef}
+              placeholder="Enter comprehensive English medical description, dosage, side effects, precautions..."
+            />
           )}
         />
       </div>
+
       <div className="col-span-3">
         <label
-          htmlFor="description"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-400"
+          htmlFor="specificationsHtmlBangla"
+          className="block text-sm font-semibold text-foreground mb-1.5"
         >
           Description (Bangla)
         </label>
@@ -474,39 +482,43 @@ export default function AddProductForm() {
           name="specificationsHtmlBangla"
           control={control}
           render={({ field }) => (
-            // <RichTextEditor content={field.value} onChange={field.onChange} />
-            <CodeEditor content={field.value} ref={codeRefBangla} />
+            <CodeEditor
+              content={field.value}
+              onChange={field.onChange}
+              ref={codeRefBangla}
+              placeholder="এখানে বাংলায় বিস্তারিত ঔষধ বিবরণ, ব্যবহারবিধি, মাত্রা ও সতর্কতা লিখুন..."
+            />
           )}
         />
       </div>
 
-      <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/20 border border-border rounded-lg">
+      <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-muted/20 border border-border rounded-xl">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="block text-xs font-semibold text-foreground mb-1">
             Product Name (Bangla)
           </label>
           <input
             {...register("nameBn")}
             type="text"
             placeholder="যেমন: প্যারাসিটামল ৫০০ মি.গ্রা."
-            className="mt-1 block w-full border border-gray-300 dark:text-gray-200 placeholder:dark:text-gray-500 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="w-full border border-border bg-background text-foreground rounded-lg py-2 px-3 focus:outline-none focus:ring-1 focus:ring-primary text-sm"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="block text-xs font-semibold text-foreground mb-1">
             Short Description (Bangla)
           </label>
           <input
             {...register("short_descriptionBn")}
             type="text"
             placeholder="বাংলায় সংক্ষিপ্ত বিবরণ..."
-            className="mt-1 block w-full border border-gray-300 dark:text-gray-200 placeholder:dark:text-gray-500 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="w-full border border-border bg-background text-foreground rounded-lg py-2 px-3 focus:outline-none focus:ring-1 focus:ring-primary text-sm"
           />
         </div>
       </div>
 
-      <div className="col-span-3 p-4 bg-card border border-border rounded-lg">
+      <div className="col-span-3 p-5 bg-card border border-border rounded-xl">
         <VariantsEditor
           variants={variants}
           onChange={(newVars) => {
@@ -522,30 +534,25 @@ export default function AddProductForm() {
         />
       </div>
 
-      <div className="flex gap-4 col-span-3 justify-center items-center">
-        <button
+      <div className="flex items-center justify-end gap-3 col-span-3 pt-6 border-t border-border">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+          disabled={isLoading}
+        >
+          Cancel
+        </Button>
+
+        <Button
           type="submit"
           disabled={isLoading}
-          className="w-36 flex justify-center gap-1 items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          loading={isLoading}
+          className="gap-2"
         >
-          {isLoading ? (
-            <>
-              <Loader className="animate-spin" /> adding ...
-            </>
-          ) : (
-            <>
-              <Blocks /> Add Product
-            </>
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={router.back}
-          className="w-36 flex justify-center items-center gap-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-        >
-          <ShieldX /> Cancel
-        </button>
+          <Blocks className="w-4 h-4" />
+          <span>Add Product</span>
+        </Button>
       </div>
     </form>
   );

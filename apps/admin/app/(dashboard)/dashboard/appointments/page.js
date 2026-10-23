@@ -108,8 +108,8 @@ export default function AppointmentsAdminPage() {
       </div>
 
       {/* Filter Tabs & Search */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto p-1 bg-muted/40 rounded-xl border border-border">
           {STATUS_TABS.map((tab) => {
             const isActive = selectedStatus === tab.id;
             return (
@@ -117,10 +117,10 @@ export default function AppointmentsAdminPage() {
                 type="button"
                 key={tab.id}
                 onClick={() => setSelectedStatus(tab.id)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+                className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-primary text-white shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/80"
                 }`}
               >
                 {tab.label}
@@ -129,7 +129,7 @@ export default function AppointmentsAdminPage() {
           })}
         </div>
 
-        <div className="w-full sm:w-72">
+        <div className="w-full md:w-80">
           <Input
             placeholder="Search patient name or phone..."
             value={searchTerm}
@@ -141,10 +141,13 @@ export default function AppointmentsAdminPage() {
 
       {/* Appointments Table */}
       <Card>
-        <CardHeader className="border-b border-border py-4">
+        <CardHeader className="border-b border-border py-4 px-6 flex flex-row items-center justify-between">
           <CardTitle className="text-base font-bold text-foreground">
-            Scheduled Appointments ({appointments.length})
+            Scheduled Consultations ({appointments.length})
           </CardTitle>
+          <div className="text-xs text-muted-foreground">
+            Filter: <strong>{STATUS_TABS.find((t) => t.id === selectedStatus)?.label || "All"}</strong>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (

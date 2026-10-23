@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
 
+import React, { useState } from "react";
+import Button from "@/components/ui/Button";
 import RelativeModal from "../../components/RelativeModal";
 import BrandForm from "./BrandForm";
 
@@ -10,14 +11,18 @@ export default function EditButton({ brand }) {
   const toggleModal = () => {
     setIsOpen(!isOpen);
   };
+
   return (
-    <div className="">
-      <button
+    <div>
+      <Button
+        size="sm"
+        variant="outline"
         onClick={toggleModal}
-        className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        className="h-7 px-2.5 text-xs font-medium"
       >
         Edit
-      </button>
+      </Button>
+
       {isOpen && (
         <RelativeModal setShowForm={toggleModal} title={"Edit Brand"}>
           <BrandForm setShowForm={toggleModal} isEdit={true} brand={brand} />

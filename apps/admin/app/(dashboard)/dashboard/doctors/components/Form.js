@@ -15,6 +15,7 @@ import { useFetchDocCategoriesQuery } from "@/store/slices/docCategoriesApi";
 import { useAddDoctorMutation } from "@/store/slices/doctorApi";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
+import Button from "@/components/ui/Button";
 
 const Form = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -304,37 +305,36 @@ const Form = () => {
           />
         </div>
 
-        <div className="flex gap-4 col-span-3 justify-center items-center">
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-36 flex justify-center gap-1 items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            {isLoading ? (
-              <>
-                <Loader className="animate-spin" /> adding ...
-              </>
-            ) : (
-              <>
-                <Blocks /> Add Doctor
-              </>
-            )}
-          </button>
-          <button
+        <div className="flex items-center justify-end gap-3 col-span-3 pt-6 border-t border-border">
+          <Button
             type="button"
-            onClick={reset}
-            className="w-36 bg-gray-500 p-2 rounded-md text-white flex justify-center items-center gap-1 font-semibold"
-          >
-            <RefreshCcw /> Reset
-          </button>
-
-          <button
-            type="button"
+            variant="outline"
             onClick={router.back}
-            className="w-36 flex justify-center items-center gap-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            disabled={isAdding}
           >
-            <ShieldX /> Cancel
-          </button>
+            Cancel
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => reset()}
+            disabled={isAdding}
+            className="text-muted-foreground gap-1.5"
+          >
+            <RefreshCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </Button>
+
+          <Button
+            type="submit"
+            disabled={isAdding}
+            loading={isAdding}
+            className="gap-2"
+          >
+            <Blocks className="w-4 h-4" />
+            <span>Add Doctor</span>
+          </Button>
         </div>
       </form>
     </div>

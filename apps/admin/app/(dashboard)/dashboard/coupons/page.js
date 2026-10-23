@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
+  Search,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -41,8 +42,12 @@ export default function CouponsAdminPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [couponToDelete, setCouponToDelete] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const coupons = data?.coupons || [];
+  const rawCoupons = data?.coupons || [];
+  const coupons = rawCoupons.filter((c) =>
+    (c.code || "").toLowerCase().includes(searchQuery.toLowerCase().trim())
+  );
 
   const handleDelete = async () => {
     if (!couponToDelete) return;
@@ -130,10 +135,22 @@ export default function CouponsAdminPage() {
 
       {/* Coupons Table */}
       <Card>
-        <CardHeader className="border-b border-border py-4">
-          <CardTitle className="text-base font-bold text-foreground">
-            All Coupons ({coupons.length})
-          </CardTitle>
+        <CardHeader className="border-b border-border p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search coupons by code..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-xs bg-muted/20 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary font-mono uppercase"
+              />
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Total Coupons: <strong>{coupons.length}</strong>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (

@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { AiOutlineDelete } from "react-icons/ai";
+import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
+import Button from "@/components/ui/Button";
 import EditButton from "./EditButton";
 import { useDeleteCategoryMutation } from "@/store/slices/CategoryApi";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -26,40 +27,41 @@ export default function SingeCategory({ category, i }) {
   return (
     <tr
       key={category?._id}
-      className="dark:hover:bg-gray-800 hover:bg-gray-100 duration-100 capitalize"
+      className="hover:bg-muted/20 transition-colors capitalize text-xs"
     >
-      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-6 py-3.5 whitespace-nowrap text-muted-foreground font-mono">
         {i + 1}
       </td>
-      <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-6 py-3.5 whitespace-nowrap">
         <Image
           src={category?.categoryImg || "/placeholder.png"}
-          width={48}
-          height={48}
+          width={40}
+          height={40}
           alt={category?.categoryName || "Category"}
-          className="object-contain bg-gray-100 dark:bg-gray-800 h-12 w-12 rounded-lg"
+          className="object-contain bg-muted/40 border border-border h-10 w-10 rounded-lg p-1"
         />
       </td>
-      <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-foreground">
-        <div>{category?.categoryName}</div>
+      <td className="px-6 py-3.5 whitespace-nowrap font-medium text-foreground">
+        <div className="font-semibold text-sm">{category?.categoryName}</div>
         {category?.slug && (
-          <span className="text-xs text-muted-foreground font-mono">
+          <span className="text-[11px] text-muted-foreground font-mono">
             /{category.slug}
           </span>
         )}
       </td>
-      <td className="px-6 py-3 whitespace-nowrap text-right text-sm">
-        <div className="flex items-center justify-end gap-2">
+      <td className="px-6 py-3.5 whitespace-nowrap text-right">
+        <div className="flex items-center justify-end gap-1.5">
           <EditButton category={category} />
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant="ghost"
             onClick={() => setShowConfirm(true)}
             disabled={isDeleting}
-            className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md transition-colors"
+            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
             title="Delete Category"
           >
-            <AiOutlineDelete className="w-5 h-5" />
-          </button>
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
         </div>
 
         <ConfirmDialog
@@ -75,4 +77,3 @@ export default function SingeCategory({ category, i }) {
     </tr>
   );
 }
-

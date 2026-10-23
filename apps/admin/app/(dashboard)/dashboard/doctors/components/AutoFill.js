@@ -1,39 +1,44 @@
 import React from "react";
+import Button from "@/components/ui/Button";
+import { Sparkles } from "lucide-react";
 
-export default function AutoFill({ setValue, classStyle }) {
-  // Add this function just before the Form component
+export default function AutoFill({ setValue, classStyle = "" }) {
   const sampleDoctorData = {
-    name: "Dr. John Smith",
-    degree: "MBBS, MD",
-    contract_number: "123456",
-    available_day: "Monday, Wednesday, Friday",
+    name: "Dr. Farhana Yasmin",
+    degree: "MBBS, FCPS (Medicine), MD (Cardiology)",
+    contract_number: "01711223344",
+    available_day: "Saturday, Monday, Wednesday",
     department: "Cardiology",
-    specialty: "Interventional Cardiology",
-    experience: 10,
-    hospital_name: "City General Hospital",
-    bmdc_number: "987654",
-    consultation_fee: 1500,
-    follow_up_fee: 800,
-    doctor_code: "DOC123",
+    specialty: "Clinical & Interventional Cardiology",
+    experience: 12,
+    hospital_name: "Dhaka Medical College & Hospital",
+    bmdc_number: "A-54321",
+    consultation_fee: 1200,
+    follow_up_fee: 600,
+    doctor_code: "DOC-CARD-01",
     doctor_info:
-      "Specialized in cardiovascular diseases with 10+ years of experience",
+      "Senior Consultant Cardiologist specializing in preventive heart care, hypertension management, and echocardiography.",
   };
 
-  // Inside your Form component, add this function before the return statement
   const autoFillForm = () => {
     Object.keys(sampleDoctorData).forEach((field) => {
-      setValue(field, sampleDoctorData[field]);
+      setValue(field, sampleDoctorData[field], { shouldValidate: true, shouldDirty: true });
     });
   };
+
   return (
     <div className={classStyle}>
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
         onClick={autoFillForm}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        className="gap-1.5 border-dashed border-primary/40 text-primary hover:bg-primary/10"
+        title="Auto-fill form with realistic doctor credentials"
       >
-        Auto Fill Form
-      </button>
+        <Sparkles className="w-3.5 h-3.5" />
+        <span>Auto Fill Sample</span>
+      </Button>
     </div>
   );
 }

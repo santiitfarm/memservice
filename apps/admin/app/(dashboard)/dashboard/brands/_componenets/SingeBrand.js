@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { AiOutlineDelete } from "react-icons/ai";
+import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
+import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
 import EditButton from "./EditButton";
 import { useDeleteBrandMutation } from "@/store/slices/brandApi";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -25,55 +27,59 @@ export default function SingeBrand({ brand, i }) {
     }
   };
 
+  const isActive = brand?.status === "active";
+
   return (
     <tr
       key={brandId}
-      className="dark:hover:bg-gray-800 hover:bg-gray-100 duration-100 capitalize"
+      className="hover:bg-muted/20 transition-colors capitalize text-xs"
     >
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-6 py-3.5 whitespace-nowrap text-muted-foreground font-mono">
         {i + 1}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-6 py-3.5 whitespace-nowrap">
         <Image
           src={brand?.logo || "/placeholder.png"}
-          width={48}
-          height={48}
+          width={40}
+          height={40}
           alt={brand?.title || "Brand Logo"}
-          className="h-12 w-12 rounded-lg object-contain bg-gray-100 dark:bg-gray-800"
+          className="h-10 w-10 rounded-lg object-contain bg-muted/40 border border-border p-1"
         />
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
-        {brand?.title}
+      <td className="px-6 py-3.5 whitespace-nowrap font-medium text-foreground">
+        <div className="font-semibold text-sm">{brand?.title}</div>
+        {brand?.slug && (
+          <span className="text-[11px] text-muted-foreground font-mono">
+            /{brand.slug}
+          </span>
+        )}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/80 font-mono">
-        {brand?.order ?? 0}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-        {brand?.category?.categoryName || "—"}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm">
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            brand?.status === "active"
-              ? "bg-green-100 text-green-800 dark:bg-green-950/60 dark:text-green-300"
-              : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
-          }`}
-        >
-          {brand?.status}
+      <td className="px-6 py-3.5 whitespace-nowrap text-foreground font-mono font-semibold">
+        <span className="px-2 py-0.5 rounded-md bg-muted/60 border border-border/80">
+          {brand?.order ?? 0}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-        <div className="flex items-center justify-end gap-2">
+      <td className="px-6 py-3.5 whitespace-nowrap text-muted-foreground">
+        {brand?.category?.categoryName || "—"}
+      </td>
+      <td className="px-6 py-3.5 whitespace-nowrap">
+        <Badge variant={isActive ? "success" : "secondary"} className="text-[11px]">
+          {brand?.status || "active"}
+        </Badge>
+      </td>
+      <td className="px-6 py-3.5 whitespace-nowrap text-right">
+        <div className="flex items-center justify-end gap-1.5">
           <EditButton brand={brand} />
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant="ghost"
             onClick={() => setShowConfirm(true)}
             disabled={isDeleting}
-            className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md transition-colors"
+            className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
             title="Delete Brand"
           >
-            <AiOutlineDelete className="w-5 h-5" />
-          </button>
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
         </div>
 
         <ConfirmDialog
@@ -89,4 +95,3 @@ export default function SingeBrand({ brand, i }) {
     </tr>
   );
 }
-

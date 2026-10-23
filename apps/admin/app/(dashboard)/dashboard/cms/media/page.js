@@ -118,7 +118,7 @@ export default function CmsMediaPage() {
           <Button
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            isLoading={isUploading}
+            loading={isUploading}
             className="gap-1.5"
           >
             <Upload className="w-4 h-4" /> Upload New Image
@@ -126,22 +126,24 @@ export default function CmsMediaPage() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="max-w-md">
-        <Input
-          placeholder="Search media by file name or public ID..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          leftIcon={<Search className="w-4 h-4 text-muted-foreground" />}
-        />
-      </div>
-
-      {/* Media Grid */}
+      {/* Media Grid Card */}
       <Card>
-        <CardHeader className="border-b border-border py-4">
-          <CardTitle className="text-base font-bold text-foreground">
-            All Assets ({data?.total ?? assets.length})
-          </CardTitle>
+        <CardHeader className="border-b border-border p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search media by file name or public ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-xs bg-muted/20 border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Total Assets: <strong>{data?.total ?? assets.length}</strong>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-6">
           {isLoading ? (
